@@ -1,0 +1,9 @@
+{
+  "name": "TEP-WB: Wide Binary Stars",
+  "short_name": "TEP-WB",
+  "description": "Paper 15: Wide Binary Stars as Probes of the Temporal Equivalence Principle",
+  "start_url": "/tep/wb/",
+  "display": "standalone",
+  "background_color": "#fafafa",
+  "theme_color": "#2c3e50"
+}

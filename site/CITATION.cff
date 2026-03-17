@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite it as below."
+authors:
+  - family-names: "Smawfield"
+    given-names: "Matthew Lukin"
+    orcid: "https://orcid.org/0009-0003-4327-8711"
+title: "Wide Binary Stars as Probes of the Temporal Equivalence Principle"
+version: 0.1.0
+date-released: 2026
+url: "https://mlsmawfield.com/tep/wb/"
+license: MIT
+keywords:
+  - wide binaries
+  - Gaia DR3
+  - modified gravity
+  - temporal equivalence principle
