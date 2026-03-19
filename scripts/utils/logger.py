@@ -1,3 +1,11 @@
+"""
+Logging Utility for TEP-WB
+
+Standardizes the output formatting for the reproduction pipeline, ensuring that all 
+run outputs are cleanly structured, readable, and properly archived in the logs/ directory
+for reproducibility auditing.
+"""
+
 import logging
 import sys
 from pathlib import Path

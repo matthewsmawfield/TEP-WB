@@ -68,6 +68,7 @@ class HTMLToMarkdownConverter {
         html = html.replace(/<!--[\s\S]*?-->/g, '');
         html = html.replace(/<nav\b[\s\S]*?<\/nav>/gi, '');
         html = html.replace(/<div[^>]*class=["']manuscript-section[^"']*["'][^>]*data-section=["']([^"']*)["'][^>]*>/gi, '\n\n## $1\n\n');
+        html = html.replace(/<div[^>]*class=["'][^"']*equation[^"']*["'][^>]*>\s*([\s\S]*?)\s*<\/div>/gi, '\n\n$1\n\n');
 
         html = html.replace(/<pre[^>]*>\s*<code(?: class=["']language-([^"']+)["'])?[^>]*>([\s\S]*?)<\/code>\s*<\/pre>/gi, (match, lang, code) => {
             const language = (lang || '').trim();
@@ -84,25 +85,27 @@ class HTMLToMarkdownConverter {
         html = html.replace(/<h5[^>]*>([\s\S]*?)<\/h5>/gi, '\n##### $1\n\n');
         html = html.replace(/<h6[^>]*>([\s\S]*?)<\/h6>/gi, '\n###### $1\n\n');
 
-        html = html.replace(/<figcaption[^>]*>([\s\S]*?)<\/figcaption>/gi, '\n\n    $1\n');
-        html = html.replace(/<figure[^>]*>([\s\S]*?)<\/figure>/gi, '\n\n$1\n\n');
+        html = html.replace(/\s*<figcaption[^>]*>([\s\S]*?)<\/figcaption>\s*/gi, '\n\n$1\n\n');
+        html = html.replace(/\s*<figure[^>]*>([\s\S]*?)<\/figure>\s*/gi, '\n\n$1\n\n');
 
-        html = html.replace(/<img[^>]+>/gi, (tag) => {
+        html = html.replace(/\s*<img[^>]+>\s*/gi, (tag) => {
             const srcMatch = tag.match(/src=["']([^"']+)["']/i);
             const altMatch = tag.match(/alt=["']([^"']*)["']/i);
             const src = srcMatch ? srcMatch[1] : '';
             const alt = altMatch ? altMatch[1] : '';
-            return src ? `\n![${alt}](${src})\n` : '';
+            return src ? `\n\n![${alt}](${src})\n\n` : '';
         });
 
         html = html.replace(/<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi, '\n> $1\n\n');
-        html = html.replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1\n\n');
+        html = html.replace(/<p[^>]*>([\s\S]*?)<\/p>\s*/gi, '\n\n$1\n\n');
 
         html = html.replace(/<(strong|b)[^>]*>([\s\S]*?)<\/(strong|b)>/gi, '**$2**');
         html = html.replace(/<(em|i)[^>]*>([\s\S]*?)<\/(em|i)>/gi, '*$2*');
         html = html.replace(/<code[^>]*>([\s\S]*?)<\/code>/gi, '`$1`');
 
-        html = html.replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '- $1\n');
+        html = html.replace(/<(ol|ul)[^>]*>\s*/gi, '\n\n');
+        html = html.replace(/<\/(ol|ul)>\s*/gi, '\n\n');
+        html = html.replace(/<li[^>]*>([\s\S]*?)<\/li>\s*/gi, '- $1\n');
         html = html.replace(/<br\s*\/?>/gi, '\n');
         html = html.replace(/<hr\s*\/?>/gi, '\n---\n');
 
@@ -112,12 +115,15 @@ class HTMLToMarkdownConverter {
             const language = lang.trim();
             return `\n\n\`\`\`${language}\n${code}\n\`\`\`\n\n`;
         });
+        html = html.replace(/(^- .+\n)(?!(?:- |\n|$))/gm, '$1\n');
 
+        html = html.replace(/^[ \t]+$/gm, '');
+        html = html.replace(/[ \t]+$/gm, '');
         return html.replace(/\n{3,}/g, '\n\n').trim();
     }
 
     async convertSiteToMarkdown() {
-        console.log('🔄 Converting HTML site to markdown (TEP-JWST)...');
+        console.log('🔄 Converting HTML site to markdown (TEP-WB)...');
         try {
             const manifestPath = path.join(__dirname, 'manifest.json');
             if (!fs.existsSync(manifestPath)) throw new Error('manifest.json not found.');
@@ -137,9 +143,9 @@ class HTMLToMarkdownConverter {
             }
 
             console.log(`  Total HTML: ${(allHtml.length / 1024).toFixed(1)} KB`);
-            const markdownTitle = manifest.title || 'The Temporal Equivalence Principle: A Unified Resolution to the JWST High-Redshift Anomalies';
+            const markdownTitle = manifest.title || 'The Temporal Equivalence Principle: Resolving the Gaia DR3 Controversy via Temporal Screening';
             const markdown = `# ${markdownTitle}\n\n` + this.htmlToMarkdown(allHtml);
-            const outputPath = path.join(__dirname, '..', '13manuscript-tep-jwst.md');
+            const outputPath = path.join(__dirname, '..', '15manuscript-tep-wb.md');
             fs.writeFileSync(outputPath, markdown, 'utf8');
             console.log(`✅ Markdown saved to: ${outputPath} (${(markdown.length / 1024).toFixed(1)} KB)`);
         } catch (error) {

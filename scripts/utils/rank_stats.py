@@ -1,3 +1,18 @@
+"""
+Statistical Utility Functions for TEP-WB
+
+This module implements partial rank correlation algorithms used in secondary analysis 
+to isolate specific physical dependencies while controlling for confounders.
+
+Scientific Rationale:
+In wide binary studies, many parameters are highly correlated (e.g., separation is 
+correlated with distance due to observational selection effects). To isolate the 
+true physical effect of separation on velocity from observational biases, we use 
+partial rank correlation. Rank statistics (Spearman-like) are preferred over 
+linear (Pearson) statistics because the relationships between kinematic parameters 
+and physical parameters are often non-linear and heavily tailed.
+"""
+
 import numpy as np
 from scipy import stats
 

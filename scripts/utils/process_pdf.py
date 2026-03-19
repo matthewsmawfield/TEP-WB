@@ -2,15 +2,15 @@
 """Unified PDF Processing Script
 Compresses PDF and embeds comprehensive metadata in one operation.
 
-This script processes the TEP-JWST manuscript PDF (Paper 13: "The Temporal Equivalence 
-Principle: A Unified Resolution to the JWST High-Redshift Anomalies") by compressing it 
+This script processes the TEP-WB manuscript PDF (Paper 15: "The Wide Binary Anomaly: 
+Resolving the Gaia DR3 Controversy via Temporal Screening") by compressing it 
 for web distribution and embedding complete academic metadata for proper indexing and citation.
 
 Usage:
     python process_pdf.py <input_pdf> [--quality ebook|printer|prepress|default]
     
 Example:
-    python process_pdf.py site/public/docs/Smawfield_2026_TEP-JWST_v0.1_Kos.pdf --quality ebook
+    python process_pdf.py site/public/docs/Smawfield_2026_TEP-WB_v0.1_Kilifi.pdf --quality ebook
 """
 
 import subprocess
@@ -108,7 +108,7 @@ def main():
     )
     parser.add_argument(
         '--doi',
-        default='10.5281/zenodo.19000828',
+        default='10.5281/zenodo.19102062',
         help='DOI to embed in metadata'
     )
     
@@ -152,65 +152,62 @@ def main():
     # Paper metadata - must match manuscript, CITATION.cff, and zenodo.txt
     metadata = {
         # Core identification
-        'Title': 'The Temporal Equivalence Principle: A Unified Resolution to the JWST High-Redshift Anomalies',
+        'Title': 'The Wide Binary Anomaly: Resolving the Gaia DR3 Controversy via Temporal Screening',
         'Author': 'Matthew Lukin Smawfield',
         'Creator': 'Matthew Lukin Smawfield',
         
         # Scientific abstract with key results
         'Subject': (
-            'JWST has revealed high-redshift galaxies with star formation efficiencies exceeding ΛCDM limits, '
-            'overmassive black holes, and stellar masses surpassing dynamical masses—all preferentially in deep '
-            'gravitational potentials. This work tests whether this pattern arises from violation of the isochrony '
-            'axiom via the Temporal Equivalence Principle (TEP), a chameleon-screened scalar-tensor theory where '
-            'proper time depends on environment. Using the external Cepheid prior α₀ = 0.58 ± 0.16 with no JWST '
-            'retuning, TEP predicts ~34% reduction of the Red Monster efficiency excess and provides a physical '
-            'route to differential black-hole growth in Little Red Dots. The strongest direct test uses the '
-            'JWST-SUSPENSE survey of massive quiescent galaxies at z = 1.2–2.3 (N=15) with dynamically measured '
-            'masses from stellar velocity dispersions and spectral ages from absorption features. The kinematic '
-            'comparison shows Γₜ predicts spectral age more strongly than stellar mass: ρ(Age, Γₜ | z) = +0.733 '
-            '(p = 1.9×10⁻³) vs ρ(Age, M* | z) = +0.493 (p = 0.062). Under joint control, Γₜ retains residual '
-            'association ρ(Age, Γₜ | M*, z) = +0.624 (p = 0.0129), while stellar mass contributes no residual '
-            'signal ρ(Age, M* | Γₜ, z) = -0.036 (p = 0.898). Monte Carlo analysis over published uncertainties '
-            'preserves supportive Γₜ residual in 99.7% of draws. This materially narrows the mass-circularity '
-            'objection to photometric TEP tests.'
+            'The 2022 release of Gaia Data Release 3 (DR3) provided a catalog of more than a million '
+            'wide binary stars, creating a powerful test of gravity in the extreme weak-field regime. '
+            'Yet the physical interpretation of the signal remains unsettled. Chae (2023, 2024) and '
+            'Hernandez (2023) report a significant anomalous velocity boost of ~20% at wide separations, '
+            'interpreting it as evidence for Modified Newtonian Dynamics (MOND). By contrast, Banik et al. '
+            '(2024) and Pittordis & Sutherland (2025) argue that the same signal may still be explained '
+            'within standard General Relativity through hierarchical triple systems. This paper shows that '
+            'the Temporal Equivalence Principle (TEP) offers a natural resolution. In TEP, a conformal '
+            'scalar field couples to local mass density, so the anomaly appears through density-dependent '
+            'screening rather than as a universal, scale-free boost. The Gaia DR3 sample reveals a '
+            'characteristic transition radius of Rs = 2646 ± 182 AU, with the lower-density halo '
+            'transitioning at smaller radius than the higher-density disk (p = 0.0033). The screening '
+            'profile is strongly preferred over both Newtonian and constant-boost alternatives.'
         ),
         
         # Keywords for indexing
         'Keywords': (
-            'JWST; James Webb Space Telescope; High-Redshift Galaxies; Early Universe; '
-            'Structure Formation; Galaxy Evolution; Star Formation Efficiency; '
-            'Temporal Equivalence Principle; TEP; Temporal Shear; Time Dilation; '
-            'Gravitational Potential; Chameleon Screening; Scalar-Tensor Gravity; '
-            'Modified Gravity; SUSPENSE Survey; Dynamical Masses; Velocity Dispersion; '
-            'Stellar Ages; Red Monsters; Little Red Dots; Black Hole Growth; Cosmology'
+            'Wide Binary Stars; Gaia DR3; Modified Newtonian Dynamics; MOND; '
+            'Temporal Equivalence Principle; TEP; Chameleon Screening; '
+            'Scalar-Tensor Gravity; Modified Gravity; Gravitational Anomalies; '
+            'Weak-Field Gravity; Dark Matter; Hierarchical Triples; Stellar Dynamics; '
+            'Galactic Halo; Galactic Disk; Density-Dependent Screening'
         ),
         
         # Production metadata
-        'Producer': 'TEP-JWST Research Project (Paper 13) - Version 0.1 (Kos)',
+        'Producer': 'TEP-WB Research Project (Paper 15) - Version 0.1 (Kilifi)',
         
         # Rights and identifiers
         'Copyright': 'Creative Commons Attribution 4.0 International License (CC BY 4.0)',
         
         # Dates
-        'CreationDate': '2026:03:13 00:00:00',
-        'ModifyDate': '2026:03:13 00:00:00',
+        'CreationDate': '2026:03:19 00:00:00',
+        'ModifyDate': '2026:03:19 00:00:00',
         
         # XMP Dublin Core metadata (exiftool uses these prefixes)
         'XMP-dc:Creator': 'Matthew Lukin Smawfield',
-        'XMP-dc:Title': 'The Temporal Equivalence Principle: A Unified Resolution to the JWST High-Redshift Anomalies',
-        'XMP-dc:Description': 'TEP resolution to JWST high-redshift anomalies via environment-dependent proper time',
+        'XMP-dc:Title': 'The Wide Binary Anomaly: Resolving the Gaia DR3 Controversy via Temporal Screening',
+        'XMP-dc:Description': 'TEP resolution to Gaia DR3 wide-binary controversy via density-dependent temporal screening',
         'XMP-dc:Rights': 'CC BY 4.0',
         'XMP-dc:Identifier': f'doi:{args.doi}',
-        'XMP-dc:Source': 'https://matthewsmawfield.github.io/TEP-JWST/',
+        'XMP-dc:Source': 'https://matthewsmawfield.github.io/TEP-WB/',
         'XMP-dc:Publisher': 'Zenodo',
-        'XMP-dc:Date': '2026-03-13',
+        'XMP-dc:Date': '2026-03-19',
         'XMP-dc:Type': 'Preprint',
         'XMP-dc:Format': 'application/pdf',
         'XMP-dc:Language': 'en',
         
         # PRISM (Publishing Requirements for Industry Standard Metadata)
         'XMP-prism:DOI': args.doi,
-        'XMP-prism:URL': 'https://matthewsmawfield.github.io/TEP-JWST/',
+        'XMP-prism:URL': 'https://matthewsmawfield.github.io/TEP-WB/',
         'XMP-prism:VersionIdentifier': '0.1',
         'XMP-prism:PublicationName': 'TEP Research Series',
         

@@ -1,6 +1,6 @@
 {
-  "version": "0.1.0",
-  "paper": "TEP-WB",
-  "series": 15,
-  "status": "in_progress"
+  "version": "v0.1 (Kilifi)",
+  "name": "TEP-WB: Wide Binary Anomaly",
+  "date": "2026-03-19",
+  "build": "0"
 }

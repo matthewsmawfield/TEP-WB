@@ -1,3 +1,6 @@
+---
+trigger: always_on
+---
 # TEP-WB Rules
 
 Academic Standard: Write according to the best possible academic standards, adopting the persona of a world-class physicist writing a landmark paper.

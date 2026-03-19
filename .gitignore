@@ -5,33 +5,58 @@ __pycache__/
 *.so
 .Python
 env/
-venv/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
 .env
+.venv
+venv/
+ENV/
 
-# Data files (large)
-*.fits
-*.h5
-*.hdf5
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs (keep structure)
-logs/*.log
-logs/*.txt
-!logs/.gitkeep
-
-# Results (keep structure)
+# Data and Results
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+data/interim/*
+!data/interim/.gitkeep
 results/outputs/*
 !results/outputs/.gitkeep
+results/figures/*
+!results/figures/.gitkeep
 
-# Temp files
+# Logs
+logs/*
+!logs/.gitkeep
+
+# Site build
+site/node_modules/
+site/dist/
+site/.nojekyll
+
+# IDE
+.vscode/
+.idea/
+.windsurf/
+*.swp
+*.swo
+.DS_Store
+
+# Temporary files
 *.tmp
 *.temp

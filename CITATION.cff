@@ -3,15 +3,17 @@ message: "If you use this work, please cite it as below."
 authors:
   - family-names: "Smawfield"
     given-names: "Matthew Lukin"
-    orcid: "https://orcid.org/0009-0003-4327-8711"
-title: "Wide Binary Stars as Probes of the Temporal Equivalence Principle"
-version: 0.1.0
-date-released: 2026
-url: "https://github.com/mlsmawfield/TEP-WB"
-license: MIT
+    orcid: "https://orcid.org/0009-0003-8219-3159"
+title: "The Wide Binary Anomaly: Resolving the Gaia DR3 Controversy via Temporal Screening"
+version: "0.1 (Kilifi)"
+date-released: 2026-03-19
+doi: 10.5281/zenodo.19102062
+url: "https://github.com/matthewsmawfield/TEP-WB"
+license: CC-BY-4.0
 keywords:
   - wide binaries
   - Gaia DR3
   - modified gravity
   - MOND
   - temporal equivalence principle
+  - gravitational screening

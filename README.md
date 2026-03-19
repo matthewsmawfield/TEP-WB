@@ -1,36 +1,63 @@
-# TEP-WB: Wide Binary Stars as Probes of the Temporal Equivalence Principle
+# The Wide Binary Anomaly: Resolving the Gaia DR3 Controversy via Temporal Screening
 
-## TEP Series: Paper 15 (Wide Binaries)
+[![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 
-This repository contains the analysis pipeline and manuscript for **Paper 15** of the TEP series, investigating gravitational dynamics in wide binary star systems using Gaia DR3 data.
+**Author:** Matthew Lukin Smawfield  
+**Status:** In Development  
+**Paper Series:** TEP Series: Paper 15 (Wide Binaries)
 
-### Abstract
+## Overview
 
-Wide binary stars with separations exceeding ~3,000 AU have emerged as a critical testing ground for gravitational physics, with recent studies reporting conflicting evidence for deviations from Newtonian gravity. We present a systematic analysis of Gaia DR3 wide binary dynamics through the lens of the Temporal Equivalence Principle (TEP), which predicts a screening transition at separations where orbital accelerations approach the critical value a₀ ≈ 1.2×10⁻¹⁰ m/s². For solar-mass binaries, this corresponds to r_trans ≈ 7,000 AU.
+The Gaia DR3 catalog of over one million wide binaries opens a precise test of gravity in the weak-field regime ($a \lesssim 10^{-10}$ m/s$^2$), yet whether the observed velocity excess reflects modified gravity or unresolved systematics remains contested. This paper shows that the Temporal Equivalence Principle (TEP), in which the conformal factor $A(\phi) = \exp(2\beta\phi/M_{\text{Pl}})$ modulates matter proper time as $\mathrm{d}\tau/\mathrm{d}t \propto A(\phi)^{1/2}$, resolves that tension through density-dependent screening.
 
-### Key Findings
+From 341,315 high-purity systems, the analysis identifies a screening transition at $R_s = 2646 \pm 182$ AU (statistical; $\pm 563$ AU total), strongly preferred over both a flat Newtonian profile ($\Delta \chi^2 = 14{,}845$) and a constant boost ($\Delta \chi^2 = 3{,}583$). At large separation the profile saturates at $\alpha_{\rm sat} = 0.366 \pm 0.012$, roughly 35--40% above the Keplerian baseline.
 
-- **Screening Transition**: TEP predicts a gradual transition from Keplerian to enhanced dynamics at ~7,000 AU
-- **Partial MOND Signal**: The ~22% velocity boost at >3,000 AU is consistent with unscreened TEP dynamics
-- **Resolution of Controversy**: Neither pure MOND nor pure GR fully describes the data; TEP provides a unified framework
+The signal also shows the environmental ordering required by TEP. After metallicity-dependent mass corrections and bootstrap uncertainty estimation, the lower-density halo transitions at smaller radius than the higher-density disk ($R_s = 4673 \pm 194$ versus $7159 \pm 1573$ AU), confirmed by a solar-track control ($R_s = 4099 \pm 251$ versus $6885 \pm 1223$ AU; permutation $p = 0.0033$ in both cases). Scrambling tests fail to reproduce the observed screening preference ($p = 0.0066$). These results support the interpretation of the wide-binary anomaly as a kinematic signature of the conformal scalar field emerging from screening at sub-galactic scales.
 
-### Repository Structure
+## Repository Structure
 
-```
+```text
 TEP-WB/
-├── data/                    # Gaia DR3 wide binary catalogs
-├── scripts/steps/           # Reproducible analysis pipeline
-├── results/outputs/         # Analysis outputs and figures
-├── site/components/         # Manuscript HTML sections
-├── manuscripts/             # Generated PDF manuscripts
-└── logs/                    # Execution logs
+├── data/                    # Gaia DR3 catalogs and processed samples
+├── logs/                    # Execution logs
+├── manuscripts/             # Generated PDF/Markdown outputs
+├── results/                 # Analytical outputs and figures
+├── scripts/
+│   ├── steps/               # Sequential analysis pipeline
+│   └── utils/               # Shared utilities
+├── site/
+│   └── components/          # HTML source of truth for manuscript
+└── README.md
 ```
 
-### Data Sources
+## Reproduction Pipeline
 
-- **Gaia DR3**: Wide binary catalog from El-Badry et al. (2021), updated for DR3
-- **Separation Range**: 1,000 - 30,000 AU (probing screened and unscreened regimes)
+To reproduce the analysis and generate the manuscript:
 
-### License
+1. **Install Dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   npm install --prefix site
+   ```
 
-MIT License - See [LICENSE](LICENSE) for details.
+2. **Run Analysis Pipeline:**
+   ```bash
+   python3 scripts/steps/step_000_catalog_ingestion.py   # Download Gaia DR3 catalog
+   python3 scripts/steps/step_001_sample_selection.py    # Filter for high-purity binaries
+   python3 scripts/steps/step_002_kinematic_analysis.py  # Calculate v_tilde profiles
+   python3 scripts/steps/step_003_screening_test.py      # Fit TEP screening model
+   python3 scripts/steps/step_004_sample_characterization.py # Generate diagnostic plots
+   python3 scripts/steps/step_005_environment_test.py    # Test environmental dependence
+   python3 scripts/steps/step_006_audit_analysis.py      # Audit for systematic biases
+   python3 scripts/steps/step_007_supplemental_controls.py # Run RV, stratification, and null-control diagnostics
+   ```
+
+3. **Build Manuscript:**
+   ```bash
+   npm run build:markdown --prefix site
+   ```
+   The final manuscript will be available at `15manuscript-tep-wb.md`.
+
+## License
+
+Creative Commons Attribution 4.0 International (CC-BY-4.0).

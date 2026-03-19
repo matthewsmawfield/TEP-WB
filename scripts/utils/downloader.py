@@ -1,4 +1,11 @@
 """
+Downloader Utility for TEP-WB
+
+Handles robust, chunked downloading of large astronomical catalogs (e.g., the 1.8GB Gaia 
+DR3 FITS file) from Zenodo, providing progress bars and basic integrity checks.
+"""
+
+"""
 TEP-JWST shared download utility.
 
 Features:

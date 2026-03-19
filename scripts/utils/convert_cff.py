@@ -82,7 +82,7 @@ def main():
   year={{{cff_data.get('date-released').year}}},
   doi={{{cff_data.get('doi')}}},
   url={{{cff_data.get('url')}}},
-  note={{Preprint v{cff_data.get('version')} ({cff_data.get('commit', 'Kos')})}}
+  note={{Preprint v{cff_data.get('version')}}}
 }}"""
     
     with open("CITATION.bib", "w") as f:

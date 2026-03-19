@@ -1,13 +1,36 @@
 # TEP-WB Zenodo Metadata
-# To be updated upon publication
+# Version: v0.1 (Kilifi)
+# Date: 2026-03-19
+# DOI: 10.5281/zenodo.19102062
 
-title: "Wide Binary Stars as Probes of the Temporal Equivalence Principle"
+title: "The Wide Binary Anomaly: Resolving the Gaia DR3 Controversy via Temporal Screening"
+doi: 10.5281/zenodo.19102062
+version: "v0.1 (Kilifi)"
+date: 2026-03-19
 description: >
-  Paper 15 of the TEP series. Analysis of Gaia DR3 wide binary dynamics
-  demonstrating screening transition consistent with TEP predictions.
+  The Gaia DR3 catalog of over one million wide binaries opens a precise test
+  of gravity in the weak-field regime (a ≲ 10^-10 m/s^2), yet whether the
+  observed velocity excess reflects modified gravity or unresolved systematics
+  remains contested. This paper shows that the Temporal Equivalence Principle
+  (TEP), in which the conformal factor A(phi) modulates matter proper time,
+  resolves that tension through density-dependent screening. From 341,315
+  high-purity systems, the analysis identifies a screening transition at
+  R_s = 2646 ± 182 AU (statistical; ±563 AU total), strongly preferred over
+  both a flat Newtonian profile (Δχ² = 14,845) and a constant boost
+  (Δχ² = 3,583). At large separation the profile saturates at α_sat = 0.366,
+  roughly 35-40% above the Keplerian baseline. The signal also shows the
+  environmental ordering required by TEP. After metallicity-dependent mass
+  corrections and bootstrap uncertainty estimation, the lower-density halo
+  transitions at smaller radius than the higher-density disk
+  (R_s = 4673 ± 194 versus 7159 ± 1573 AU), confirmed by a solar-track
+  control (R_s = 4099 ± 251 versus 6885 ± 1223 AU; permutation p = 0.0033
+  in both cases). Scrambling tests fail to reproduce the observed screening
+  preference (p = 0.0066). These results support the interpretation of the
+  wide-binary anomaly as a kinematic signature of the conformal scalar field
+  emerging from screening at sub-galactic scales.
 creators:
   - name: "Smawfield, Matthew Lukin"
-    orcid: "0009-0003-4327-8711"
+    orcid: "0009-0003-8219-3159"
 keywords:
   - wide binaries
   - Gaia DR3
@@ -15,4 +38,4 @@ keywords:
   - MOND
   - temporal equivalence principle
   - gravitational screening
-license: MIT
+license: CC-BY-4.0
