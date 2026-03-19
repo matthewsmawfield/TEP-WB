@@ -24,7 +24,6 @@ from scipy.optimize import curve_fit
 from scipy import stats
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-import sys
 sys.path.insert(0, str(PROJECT_ROOT))
 from scripts.utils.logger import TEPLogger, set_step_logger, print_status
 
@@ -168,7 +167,7 @@ def fit_model(model_func, s_data, v_data, v_err, p0, bounds):
             'residuals': residuals,
             'model_values': v_model
         }
-    except Exception:
+    except (RuntimeError, ValueError):
         return {'success': False}
 
 def perform_screening_test():
@@ -296,6 +295,43 @@ def perform_screening_test():
                  "SUCCESS" if p_runs > 0.05 else "WARNING")
     
     # =============================================================================
+    # RESIDUAL AUTOCORRELATION DIAGNOSTIC
+    # =============================================================================
+
+    print_status("Computing Residual Autocorrelation...", "PROCESS")
+    std_residuals = tep_result['residuals'] / v_err  # standardized residuals
+    n_res = len(std_residuals)
+    r_mean = np.mean(std_residuals)
+    denom = np.sum((std_residuals - r_mean)**2)
+
+    acf_results = {}
+    for lag in [1, 2, 3]:
+        if lag < n_res:
+            numer = np.sum((std_residuals[lag:] - r_mean) * (std_residuals[:-lag] - r_mean))
+            rho = numer / denom if denom > 0 else 0.0
+            # Bartlett SE for white noise: 1/sqrt(n)
+            se_bartlett = 1.0 / np.sqrt(n_res)
+            z_acf = rho / se_bartlett if se_bartlett > 0 else 0.0
+            acf_results[f'lag_{lag}'] = {'rho': rho, 'se': se_bartlett, 'z': z_acf}
+            sig_flag = "*" if abs(z_acf) > 1.96 else ""
+            print_status(f"  Lag-{lag}: ρ = {rho:.3f}, z = {z_acf:.2f} {sig_flag}", "INFO")
+
+    # Durbin-Watson statistic: DW ≈ 2(1-ρ₁), values near 2 = no autocorrelation
+    dw_stat = float(np.sum(np.diff(std_residuals)**2) / np.sum(std_residuals**2))
+    print_status(f"  Durbin-Watson: DW = {dw_stat:.3f} (2.0 = no autocorrelation)", "INFO")
+
+    acf_lag1 = acf_results.get('lag_1', {}).get('rho', np.nan)
+    acf_lag2 = acf_results.get('lag_2', {}).get('rho', np.nan)
+    acf_lag3 = acf_results.get('lag_3', {}).get('rho', np.nan)
+    acf_lag1_z = acf_results.get('lag_1', {}).get('z', np.nan)
+
+    if abs(acf_lag1_z) < 1.96:
+        print_status("Residuals are consistent with uncorrelated noise (lag-1 |z| < 1.96)", "SUCCESS")
+        print_status("Error inflation is the appropriate treatment for χ²_ν > 1", "SUCCESS")
+    else:
+        print_status("Significant lag-1 autocorrelation detected — covariance matrix refit advised", "WARNING")
+
+    # =============================================================================
     # BOOTSTRAP CONFIDENCE INTERVALS
     # =============================================================================
     
@@ -319,19 +355,257 @@ def perform_screening_test():
         try:
             jk_popt, _ = curve_fit(tep_screening_model, subset['sep_AU'], subset['v_tilde_norm'],
                                    sigma=subset['sem_norm'], p0=[r_s_tep, alpha_tep],
-                                   bounds=([100.0, 0.0], [50000.0, 0.5]), maxfev=10000)
+                                   bounds=([100.0, 0.0], [50000.0, 0.8]), maxfev=10000)
             jackknife_rs.append(jk_popt[0])
             jackknife_alpha.append(jk_popt[1])
-        except Exception:
+        except (RuntimeError, ValueError):
             pass
     
     jackknife_rs = np.asarray(jackknife_rs)
     jackknife_alpha = np.asarray(jackknife_alpha)
-    jackknife_rs_std = float(np.std(jackknife_rs, ddof=1)) if len(jackknife_rs) > 1 else np.nan
-    jackknife_alpha_std = float(np.std(jackknife_alpha, ddof=1)) if len(jackknife_alpha) > 1 else np.nan
+    n_jk = len(jackknife_rs)
+    if n_jk > 1:
+        jackknife_rs_std = float(np.sqrt((n_jk - 1) / n_jk * np.sum((jackknife_rs - np.mean(jackknife_rs))**2)))
+        jackknife_alpha_std = float(np.sqrt((n_jk - 1) / n_jk * np.sum((jackknife_alpha - np.mean(jackknife_alpha))**2)))
+    else:
+        jackknife_rs_std = np.nan
+        jackknife_alpha_std = np.nan
     
     print_status(f"Jackknife: σ(R_s) = {jackknife_rs_std:.1f} AU across {len(jackknife_rs)} refits", "INFO")
     
+    # =============================================================================
+    # COVARIANCE-AWARE REFIT (GLS)
+    # =============================================================================
+
+    print_status("Performing Covariance-Aware Refit (GLS)...", "PROCESS")
+
+    # Build AR(1) correlation matrix from measured lag-1 autocorrelation
+    rho_ar1 = max(0.0, acf_lag1)  # clip negative to 0
+    n_bins = len(s_data)
+    R_corr = np.zeros((n_bins, n_bins))
+    for i in range(n_bins):
+        for j in range(n_bins):
+            R_corr[i, j] = rho_ar1 ** abs(i - j)
+
+    # Covariance matrix: C_ij = sigma_i * sigma_j * rho^|i-j|
+    # Scale diagonal by sqrt(chi2_nu) to account for underestimated variance
+    scale_factor = np.sqrt(tep_result['reduced_chi2'])
+    sigma_scaled = v_err * scale_factor
+    C_cov = np.outer(sigma_scaled, sigma_scaled) * R_corr
+
+    # Invert covariance matrix
+    try:
+        C_inv = np.linalg.inv(C_cov)
+        cov_valid = True
+    except np.linalg.LinAlgError:
+        print_status("Covariance matrix singular — falling back to diagonal", "WARNING")
+        cov_valid = False
+
+    if cov_valid:
+        from scipy.optimize import minimize as scipy_minimize
+
+        def gls_objective(params, x, y, C_inv_mat):
+            model_vals = tep_screening_model(x, params[0], params[1])
+            r = y - model_vals
+            return float(r @ C_inv_mat @ r)
+
+        # GLS fit for TEP
+        gls_res = scipy_minimize(gls_objective, x0=[r_s_tep, alpha_tep],
+                                  args=(s_data, v_data, C_inv),
+                                  bounds=[(100.0, 50000.0), (0.0, 0.8)],
+                                  method='L-BFGS-B')
+        r_s_gls = float(gls_res.x[0])
+        alpha_gls = float(gls_res.x[1])
+        chi2_gls = float(gls_res.fun)
+        dof_gls = n_bins - 2
+        chi2_nu_gls = chi2_gls / dof_gls
+
+        # GLS parameter uncertainties via numerical Hessian
+        eps_rs = max(1.0, r_s_gls * 1e-4)
+        eps_alpha = max(1e-5, alpha_gls * 1e-4)
+        f0 = chi2_gls
+        # d²χ²/dR_s²
+        fp_rs = gls_objective([r_s_gls + eps_rs, alpha_gls], s_data, v_data, C_inv)
+        fm_rs = gls_objective([r_s_gls - eps_rs, alpha_gls], s_data, v_data, C_inv)
+        d2_rs = (fp_rs - 2*f0 + fm_rs) / eps_rs**2
+        # d²χ²/dα²
+        fp_a = gls_objective([r_s_gls, alpha_gls + eps_alpha], s_data, v_data, C_inv)
+        fm_a = gls_objective([r_s_gls, alpha_gls - eps_alpha], s_data, v_data, C_inv)
+        d2_alpha = (fp_a - 2*f0 + fm_a) / eps_alpha**2
+        # Uncertainties: σ = sqrt(2 / d²χ²/dθ²)
+        r_s_err_gls = float(np.sqrt(2.0 / d2_rs)) if d2_rs > 0 else np.nan
+        alpha_err_gls = float(np.sqrt(2.0 / d2_alpha)) if d2_alpha > 0 else np.nan
+
+        print_status(f"GLS TEP: R_s = {r_s_gls:.1f} ± {r_s_err_gls:.1f} AU, α = {alpha_gls:.4f} ± {alpha_err_gls:.4f}", "RESULT")
+        print_status(f"GLS χ² = {chi2_gls:.1f}, dof = {dof_gls}, χ²_ν = {chi2_nu_gls:.2f}", "RESULT")
+
+        # GLS for null models
+        r_gls_flat = v_data - flat_newtonian_model(s_data)
+        chi2_gls_flat = float(r_gls_flat @ C_inv @ r_gls_flat)
+
+        r_gls_const = v_data - constant_boost_model(s_data, alpha_const)
+        chi2_gls_const = float(r_gls_const @ C_inv @ r_gls_const)
+
+        delta_chi2_gls_flat = chi2_gls_flat - chi2_gls
+        delta_chi2_gls_const = chi2_gls_const - chi2_gls
+
+        print_status(f"GLS vs Flat: Δχ² = {delta_chi2_gls_flat:.1f}", "RESULT")
+        print_status(f"GLS vs Constant Boost: Δχ² = {delta_chi2_gls_const:.1f}", "RESULT")
+
+        # Parameter shift diagnostic
+        rs_shift_pct = (r_s_gls - r_s_tep) / r_s_tep * 100
+        alpha_shift_pct = (alpha_gls - alpha_tep) / alpha_tep * 100
+        print_status(f"Parameter shift: R_s {rs_shift_pct:+.1f}%, α {alpha_shift_pct:+.1f}%", "INFO")
+    else:
+        r_s_gls = alpha_gls = chi2_gls = chi2_nu_gls = np.nan
+        r_s_err_gls = alpha_err_gls = np.nan
+        delta_chi2_gls_flat = delta_chi2_gls_const = np.nan
+
+    # =============================================================================
+    # GAUSSIAN PROCESS COVARIANCE REFIT
+    # =============================================================================
+
+    print_status("Performing Gaussian Process Covariance Refit...", "PROCESS")
+
+    # Work in log-separation space (natural for log-spaced bins)
+    log_s = np.log10(s_data)
+
+    def gp_sq_exp_kernel(log_x, sigma_f, length_scale):
+        """Squared-exponential kernel matrix in log-separation space."""
+        diff = log_x[:, None] - log_x[None, :]
+        return sigma_f**2 * np.exp(-0.5 * diff**2 / length_scale**2)
+
+    def gp_neg_log_marginal_likelihood(hyperparams, log_x, residuals, diag_var):
+        """Negative log marginal likelihood for GP hyperparameter optimization.
+        C = K_SE + diag(sigma_i^2), where K_SE captures correlated scatter."""
+        log_sigma_f, log_ell = hyperparams
+        sigma_f = np.exp(log_sigma_f)
+        ell = np.exp(log_ell)
+        K = gp_sq_exp_kernel(log_x, sigma_f, ell)
+        C = K + np.diag(diag_var)
+        try:
+            L = np.linalg.cholesky(C)
+        except np.linalg.LinAlgError:
+            return 1e10
+        alpha = np.linalg.solve(L.T, np.linalg.solve(L, residuals))
+        n = len(residuals)
+        nll = 0.5 * residuals @ alpha + np.sum(np.log(np.diag(L))) + 0.5 * n * np.log(2 * np.pi)
+        return float(nll)
+
+    # Residuals from the diagonal TEP fit
+    resid_tep = tep_result['residuals']
+    diag_var = v_err**2  # original (underestimated) bin variances
+
+    # Optimize GP hyperparameters
+    from scipy.optimize import minimize as scipy_minimize_gp
+    best_gp = None
+    best_nll = np.inf
+    for log_sf0 in [np.log(0.005), np.log(0.01), np.log(0.02)]:
+        for log_ell0 in [np.log(0.3), np.log(0.5), np.log(1.0), np.log(1.5)]:
+            try:
+                gp_opt = scipy_minimize_gp(
+                    gp_neg_log_marginal_likelihood,
+                    x0=[log_sf0, log_ell0],
+                    args=(log_s, resid_tep, diag_var),
+                    method='L-BFGS-B',
+                    bounds=[(-8, 0), (-2, 2)],
+                )
+                if gp_opt.fun < best_nll:
+                    best_nll = gp_opt.fun
+                    best_gp = gp_opt
+            except (RuntimeError, ValueError):
+                pass
+
+    if best_gp is not None:
+        gp_sigma_f = float(np.exp(best_gp.x[0]))
+        gp_length_scale = float(np.exp(best_gp.x[1]))
+        gp_valid = True
+        print_status(f"GP kernel: σ_f = {gp_sigma_f:.4f}, ℓ = {gp_length_scale:.2f} dex (log₁₀ AU)", "INFO")
+
+        # Build GP covariance matrix
+        K_gp = gp_sq_exp_kernel(log_s, gp_sigma_f, gp_length_scale)
+        C_gp = K_gp + np.diag(diag_var)
+
+        try:
+            C_gp_inv = np.linalg.inv(C_gp)
+        except np.linalg.LinAlgError:
+            gp_valid = False
+            print_status("GP covariance matrix singular", "WARNING")
+
+    else:
+        gp_valid = False
+        print_status("GP hyperparameter optimization failed", "WARNING")
+
+    if gp_valid:
+        # Refit TEP model using GP covariance
+        def gp_gls_objective(params, x, y, Cinv):
+            model_vals = tep_screening_model(x, params[0], params[1])
+            r = y - model_vals
+            return float(r @ Cinv @ r)
+
+        gp_gls_res = scipy_minimize(gp_gls_objective, x0=[r_s_tep, alpha_tep],
+                                     args=(s_data, v_data, C_gp_inv),
+                                     bounds=[(100.0, 50000.0), (0.0, 0.8)],
+                                     method='L-BFGS-B')
+        r_s_gp = float(gp_gls_res.x[0])
+        alpha_gp = float(gp_gls_res.x[1])
+        chi2_gp = float(gp_gls_res.fun)
+        dof_gp = n_bins - 2
+        chi2_nu_gp = chi2_gp / dof_gp
+
+        # GP parameter uncertainties via numerical Hessian
+        eps_rs_gp = max(1.0, r_s_gp * 1e-4)
+        eps_alpha_gp = max(1e-5, alpha_gp * 1e-4)
+        f0_gp = chi2_gp
+        fp_rs_gp = gp_gls_objective([r_s_gp + eps_rs_gp, alpha_gp], s_data, v_data, C_gp_inv)
+        fm_rs_gp = gp_gls_objective([r_s_gp - eps_rs_gp, alpha_gp], s_data, v_data, C_gp_inv)
+        d2_rs_gp = (fp_rs_gp - 2*f0_gp + fm_rs_gp) / eps_rs_gp**2
+        fp_a_gp = gp_gls_objective([r_s_gp, alpha_gp + eps_alpha_gp], s_data, v_data, C_gp_inv)
+        fm_a_gp = gp_gls_objective([r_s_gp, alpha_gp - eps_alpha_gp], s_data, v_data, C_gp_inv)
+        d2_alpha_gp = (fp_a_gp - 2*f0_gp + fm_a_gp) / eps_alpha_gp**2
+        r_s_err_gp = float(np.sqrt(2.0 / d2_rs_gp)) if d2_rs_gp > 0 else np.nan
+        alpha_err_gp = float(np.sqrt(2.0 / d2_alpha_gp)) if d2_alpha_gp > 0 else np.nan
+
+        print_status(f"GP TEP: R_s = {r_s_gp:.1f} ± {r_s_err_gp:.1f} AU, α = {alpha_gp:.4f} ± {alpha_err_gp:.4f}", "RESULT")
+        print_status(f"GP χ² = {chi2_gp:.1f}, dof = {dof_gp}, χ²_ν = {chi2_nu_gp:.2f}", "RESULT")
+
+        # GP GLS for null models
+        r_gp_flat = v_data - flat_newtonian_model(s_data)
+        chi2_gp_flat = float(r_gp_flat @ C_gp_inv @ r_gp_flat)
+        r_gp_const = v_data - constant_boost_model(s_data, alpha_const)
+        chi2_gp_const = float(r_gp_const @ C_gp_inv @ r_gp_const)
+        delta_chi2_gp_flat = chi2_gp_flat - chi2_gp
+        delta_chi2_gp_const = chi2_gp_const - chi2_gp
+
+        print_status(f"GP vs Flat: Δχ² = {delta_chi2_gp_flat:.1f}", "RESULT")
+        print_status(f"GP vs Constant Boost: Δχ² = {delta_chi2_gp_const:.1f}", "RESULT")
+
+        rs_shift_gp_pct = (r_s_gp - r_s_tep) / r_s_tep * 100
+        alpha_shift_gp_pct = (alpha_gp - alpha_tep) / alpha_tep * 100
+        print_status(f"GP parameter shift: R_s {rs_shift_gp_pct:+.1f}%, α {alpha_shift_gp_pct:+.1f}%", "INFO")
+
+        # Compare GP vs AR(1) marginal likelihoods
+        ar1_nll = gp_neg_log_marginal_likelihood(
+            [np.log(gp_sigma_f), np.log(gp_length_scale)],  # placeholder — compute AR(1) NLL properly
+            log_s, resid_tep, diag_var
+        )
+        # Actual AR(1) NLL for comparison
+        C_ar1_for_nll = C_cov if cov_valid else np.diag(v_err**2)
+        try:
+            L_ar1 = np.linalg.cholesky(C_ar1_for_nll)
+            alpha_ar1_nll = np.linalg.solve(L_ar1.T, np.linalg.solve(L_ar1, resid_tep))
+            ar1_nll_val = 0.5 * resid_tep @ alpha_ar1_nll + np.sum(np.log(np.diag(L_ar1))) + 0.5 * n_bins * np.log(2*np.pi)
+        except (RuntimeError, ValueError):
+            ar1_nll_val = np.nan
+        gp_nll_val = best_nll
+        print_status(f"Marginal log-likelihood: GP = {-gp_nll_val:.1f}, AR(1) = {-ar1_nll_val:.1f}", "INFO")
+    else:
+        r_s_gp = alpha_gp = chi2_gp = chi2_nu_gp = np.nan
+        r_s_err_gp = alpha_err_gp = np.nan
+        delta_chi2_gp_flat = delta_chi2_gp_const = np.nan
+        gp_sigma_f = gp_length_scale = np.nan
+        gp_nll_val = ar1_nll_val = np.nan
+
     # =============================================================================
     # BIN 1 SENSITIVITY TEST
     # =============================================================================
@@ -440,6 +714,31 @@ def perform_screening_test():
         'bootstrap_seed': [BOOTSTRAP_SEED],
         'bootstrap_iterations': [BOOTSTRAP_ITERATIONS],
         'model_choice_uncertainty_r_s': [model_unc_r_s],
+        'acf_lag1': [acf_lag1],
+        'acf_lag2': [acf_lag2],
+        'acf_lag3': [acf_lag3],
+        'acf_lag1_z': [acf_lag1_z],
+        'durbin_watson': [dw_stat],
+        'gls_r_s_au': [r_s_gls],
+        'gls_r_s_err_au': [r_s_err_gls],
+        'gls_alpha': [alpha_gls],
+        'gls_alpha_err': [alpha_err_gls],
+        'gls_chi2': [chi2_gls],
+        'gls_chi2_nu': [chi2_nu_gls],
+        'gls_delta_chi2_vs_flat': [delta_chi2_gls_flat],
+        'gls_delta_chi2_vs_const': [delta_chi2_gls_const],
+        'gp_sigma_f': [gp_sigma_f],
+        'gp_length_scale_dex': [gp_length_scale],
+        'gp_r_s_au': [r_s_gp],
+        'gp_r_s_err_au': [r_s_err_gp],
+        'gp_alpha': [alpha_gp],
+        'gp_alpha_err': [alpha_err_gp],
+        'gp_chi2': [chi2_gp],
+        'gp_chi2_nu': [chi2_nu_gp],
+        'gp_delta_chi2_vs_flat': [delta_chi2_gp_flat],
+        'gp_delta_chi2_vs_const': [delta_chi2_gp_const],
+        'gp_neg_log_lik': [gp_nll_val],
+        'ar1_neg_log_lik': [ar1_nll_val],
     })
     fit_summary.to_csv(outputs_dir / "screening_fit_summary.csv", index=False)
     

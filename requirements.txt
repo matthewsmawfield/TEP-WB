@@ -1,5 +1,10 @@
+# TEP-WB: Wide Binary Analysis Pipeline
+# Keywords: wide binaries, Gaia DR3, modified gravity, MOND, TEP, temporal equivalence principle,
+# gravitational screening, dark matter, stellar kinematics, astrometry, orbital dynamics, astrophysics
 numpy
 pandas
+pyarrow
 scipy
 matplotlib
 astropy
+pyyaml

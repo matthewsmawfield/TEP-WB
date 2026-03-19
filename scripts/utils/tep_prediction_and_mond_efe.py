@@ -322,7 +322,7 @@ def main():
                     if c2 < best_c2:
                         best_c2 = c2
                         best = [la0, lge]
-                except:
+                except (ValueError, RuntimeError):
                     pass
 
         res = minimize(cost_efe_free, best, method='Nelder-Mead',

@@ -18,6 +18,9 @@ import sys
 import subprocess
 from pathlib import Path
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+STEPS_DIR = PROJECT_ROOT / "scripts" / "steps"
+
 def print_header(title):
     print("\n" + "="*60)
     print(f" {title}")
@@ -25,24 +28,26 @@ def print_header(title):
 
 def run_step(script_name):
     print_header(f"Running {script_name}")
-    result = subprocess.run([sys.executable, f"scripts/steps/{script_name}"])
+    result = subprocess.run([sys.executable, str(STEPS_DIR / script_name)], cwd=str(PROJECT_ROOT))
     if result.returncode != 0:
         print(f"\n[ERROR] Pipeline halted. {script_name} failed.")
         sys.exit(1)
 
 def main():
     steps = [
+        "step_000_catalog_ingestion.py",
         "step_001_sample_selection.py",
         "step_002_kinematic_analysis.py",
         "step_003_screening_test.py",
         "step_004_sample_characterization.py",
         "step_005_environment_test.py",
         "step_006_audit_analysis.py",
-        "step_007_supplemental_controls.py"
+        "step_007_supplemental_controls.py",
+        "step_008_injection_recovery.py",
+        "step_009_advanced_diagnostics.py",
+        "step_010_referee_hardening.py",
+        "step_011_mond_comparison.py"
     ]
-    
-    # Note: step_000 is usually run once to download the 1.8GB file. 
-    # Skipping here to allow rapid pipeline re-runs on cached data.
     
     for step in steps:
         run_step(step)

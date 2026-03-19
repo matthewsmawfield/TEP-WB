@@ -5,7 +5,6 @@ const path = require('path');
 const fs = require('fs');
 const net = require('net');
 const { buildStaticSite } = require('./build.js');
-const { HTMLToMarkdownConverter } = require('./html-to-markdown.js');
 
 class DevServer {
     constructor() {
@@ -31,9 +30,6 @@ class DevServer {
         console.log('\n🔄 Rebuilding site...');
         try {
             await buildStaticSite();
-            console.log('📝 Generating markdown...');
-            const converter = new HTMLToMarkdownConverter();
-            await converter.convertSiteToMarkdown();
             console.log('✅ Build & Markdown complete!');
             if (this.buildQueue) {
                 this.buildQueue = false;
@@ -45,8 +41,9 @@ class DevServer {
     }
 
     async start() {
-        console.log('🎯 TEP-JWST Development Server');
+        console.log('🎯 TEP-WB Development Server');
         const distDir = path.join(__dirname, 'dist');
+        const resultsFiguresDir = path.join(__dirname, '..', 'results', 'figures');
         if (!fs.existsSync(distDir)) fs.mkdirSync(distDir, { recursive: true });
         await this.build();
         await this.startLiveServer();
@@ -55,7 +52,7 @@ class DevServer {
             path.join(__dirname, 'components'),
             path.join(__dirname, 'index.html'),
             path.join(__dirname, 'manifest.json'),
-            path.join(__dirname, 'figures')
+            resultsFiguresDir
         ], { ignored: ['dist/**'], persistent: true, ignoreInitial: true });
 
         watcher.on('change', () => this.build());

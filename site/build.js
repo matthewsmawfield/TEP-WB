@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { createManuscriptContext, injectPlaceholders: injectManuscriptPlaceholders } = require('./manuscript-data.js');
 
 function readJsonIfExists(filePath) {
     if (!fs.existsSync(filePath)) {
@@ -149,124 +150,11 @@ function safeGet(obj, pathParts) {
 }
 
 function createInjectionContext() {
-    const outputsDir = path.join(__dirname, '..', 'results', 'outputs');
-
-    const step102 = readJsonIfExists(path.join(outputsDir, 'step_081_survey_cross_correlation.json'));
-    const step109 = readJsonIfExists(path.join(outputsDir, 'step_085_time_lens_map.json'));
-    const step114 = readJsonIfExists(path.join(outputsDir, 'step_093_teff_threshold_holdout.json'));
-
-    if (!step102) {
-        console.warn('⚠️  Missing step_081_survey_cross_correlation.json; placeholders may remain unresolved.');
-    }
-    if (!step109) {
-        console.warn('⚠️  Missing step_085_time_lens_map.json; placeholders may remain unresolved.');
-    }
-    if (!step114) {
-        console.warn('⚠️  Missing step_093_teff_threshold_holdout.json; placeholders may remain unresolved.');
-    }
-
-    const ctx = {
-        tep: {
-            table12: {},
-            table12c: {},
-            table12d: {},
-            meta: {}
-        }
-    };
-
-    if (step102) {
-        const surveys = ['UNCOVER', 'CEERS', 'COSMOS-Web'];
-        for (const survey of surveys) {
-            const key = survey.toLowerCase().replace(/[^a-z0-9]+/g, '_');
-            const s = step102.survey_correlations?.[survey];
-            if (s) {
-                ctx.tep.table12[key] = {
-                    n: formatIntegerWithCommas(s.n),
-                    rho: formatSignedNumber(s.rho, 3),
-                    ci: formatCI(s.ci_lower, s.ci_upper, 3),
-                    p: formatPValueLatex(s.p)
-                };
-            }
-
-            const tt = step102.time_tests?.[survey]?.dust_positive_only;
-            if (tt) {
-                ctx.tep.table12c[key] = {
-                    delta_rho: formatSignedNumber(tt.delta_rho, 3),
-                    dust_ratio: `${formatFixedNumber(tt.threshold_test?.ratio, 2)}×`,
-                    p_threshold: formatPValueLatex(tt.threshold_test?.p_value)
-                };
-            }
-        }
-
-        const meta = step102.meta_analysis;
-        const hetero = step102.heterogeneity;
-        if (meta) {
-            ctx.tep.meta = {
-                n_total: formatIntegerWithCommas(meta.n_total),
-                n_total_latex: formatIntegerLatex(meta.n_total),
-                rho: formatFixedNumber(meta.rho_combined, 3),
-                rho_signed: formatSignedNumber(meta.rho_combined, 3),
-                ci: formatCI(meta.ci_lower, meta.ci_upper, 3),
-                p: formatPValueLatex(meta.p_combined),
-                Q: hetero ? formatFixedNumber(hetero.Q, 2) : '',
-                p_Q: hetero ? formatFixedNumber(hetero.p_Q, 3) : '',
-                I2_percent: hetero ? `${formatFixedNumber(hetero.I2, 1)}\\%` : ''
-            };
-        }
-    }
-
-    if (step109) {
-        const surveys = ['UNCOVER', 'CEERS', 'COSMOS-Web'];
-        for (const survey of surveys) {
-            const key = survey.toLowerCase().replace(/[^a-z0-9]+/g, '_');
-            const s = step109.per_survey?.[survey]?.dust_positive_only;
-            if (!s) {
-                continue;
-            }
-            const zObs = s.correlations?.dust_vs_z_obs;
-            const zEff = s.correlations?.dust_vs_z_eff;
-            ctx.tep.table12d[key] = {
-                n: formatIntegerWithCommas(s.n),
-                rho_z_obs: formatSignedNumber(zObs?.rho, 3),
-                p_z_obs: formatPValueHtmlCell(zObs?.p_value),
-                rho_z_eff: formatSignedNumber(zEff?.rho, 3),
-                p_z_eff: formatPValueHtmlCell(zEff?.p_value)
-            };
-        }
-    }
-
-    if (step114) {
-        const summary = step114.summary;
-        if (summary) {
-            ctx.tep.step114 = {
-                selected_threshold_median_gyr: formatFixedNumber(summary.selected_threshold_median_gyr, 2),
-                selected_threshold_min_gyr: formatFixedNumber(summary.selected_threshold_min_gyr, 2),
-                selected_threshold_max_gyr: formatFixedNumber(summary.selected_threshold_max_gyr, 2),
-                fixed_threshold_gyr: formatFixedNumber(summary.fixed_threshold_gyr, 2),
-                heldout_p_combined: formatPValueLatex(summary.heldout_p_fisher_fisher_combined?.p),
-                fixed_p_combined: formatPValueLatex(summary.fixed_p_fisher_fisher_combined?.p)
-            };
-        }
-    }
-
-    return ctx;
+    return createManuscriptContext();
 }
 
 function injectPlaceholders(template, context) {
-    const unresolved = new Set();
-    const replaced = template.replace(/\{\{\s*([^}]+?)\s*\}\}/g, (match, expr) => {
-        const pathParts = expr.split('.').map(s => s.trim()).filter(Boolean);
-        const value = safeGet(context, pathParts);
-        if (value === undefined || value === null) {
-            unresolved.add(expr);
-            return match;
-        }
-        return String(value);
-    });
-    if (unresolved.size > 0) {
-        console.warn(`⚠️  Unresolved placeholders (${unresolved.size}): ${Array.from(unresolved).slice(0, 10).join(', ')}${unresolved.size > 10 ? ', ...' : ''}`);
-    }
-    return replaced;
+    return injectManuscriptPlaceholders(template, context, { failOnUnresolved: true });
 }
 
 async function buildStaticSite() {

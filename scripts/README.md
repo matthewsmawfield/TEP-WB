@@ -7,8 +7,9 @@ This folder contains the reproducible analysis pipeline for Paper 15.
 ```
 scripts/
 ├── steps/           # Numbered analysis steps
-│   ├── step_01_*.py # Data acquisition
-│   ├── step_02_*.py # Data processing
+│   ├── step_000_*.py # Data acquisition (catalog download)
+│   ├── step_001_*.py # Sample selection
+│   ├── step_002_*.py # Kinematic analysis
 │   └── ...
 └── utils/           # Shared utilities
 ```

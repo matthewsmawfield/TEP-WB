@@ -1,5 +1,5 @@
 {
-  "title": "The Wide Binary Anomaly: Resolving the Gaia DR3 Controversy via Temporal Screening",
+  "title": "The Temporal Equivalence Principle: Density-Dependent Screening in Gaia DR3 Wide Binaries",
   "authors": [
     {
       "given": "Matthew Lukin",
@@ -9,5 +9,20 @@
   ],
   "date": "2026-03-19",
   "doi": "10.5281/zenodo.19102062",
-  "version": "v0.1 (Kilifi)"
+  "version": "v0.1 (Kilifi)",
+  "keywords": [
+    "Gravitation",
+    "Astrometry",
+    "wide binaries",
+    "Galaxy: disk",
+    "Cosmology: dark matter",
+    "Cosmology: modified gravity",
+    "Temporal Equivalence Principle",
+    "TEP",
+    "density-dependent screening",
+    "chameleon gravity",
+    "Gaia DR3",
+    "MOND",
+    "weak-field gravity"
+  ]
 }

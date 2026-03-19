@@ -1,18 +1,25 @@
-# The Wide Binary Anomaly: Resolving the Gaia DR3 Controversy via Temporal Screening
+# The Temporal Equivalence Principle: Density-Dependent Screening in Gaia DR3 Wide Binaries
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19102062.svg)](https://doi.org/10.5281/zenodo.19102062)
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 
+![TEP-WB Wide Binary Screening](site/public/image.webp)
+
 **Author:** Matthew Lukin Smawfield  
-**Status:** In Development  
+**Version:** v0.1 (Kilifi)  
+**Date:** 19 March 2026  
+**Status:** Preprint (Open for Collaboration)  
+**DOI:** [10.5281/zenodo.19102062](https://doi.org/10.5281/zenodo.19102062)  
+**Website:** [https://mlsmawfield.com/tep/wb/](https://mlsmawfield.com/tep/wb/)  
 **Paper Series:** TEP Series: Paper 15 (Wide Binaries)
 
 ## Overview
 
-The Gaia DR3 catalog of over one million wide binaries opens a precise test of gravity in the weak-field regime ($a \lesssim 10^{-10}$ m/s$^2$), yet whether the observed velocity excess reflects modified gravity or unresolved systematics remains contested. This paper shows that the Temporal Equivalence Principle (TEP), in which the conformal factor $A(\phi) = \exp(2\beta\phi/M_{\text{Pl}})$ modulates matter proper time as $\mathrm{d}\tau/\mathrm{d}t \propto A(\phi)^{1/2}$, resolves that tension through density-dependent screening.
+The Gaia DR3 catalog of over one million wide binaries opens a precise window onto gravity in the weak-field regime ($a \lesssim 10^{-10}$ m/s$^2$), yet whether the observed velocity excess reflects modified gravity or unresolved systematics remains contested. This paper shows that the Temporal Equivalence Principle (TEP)—in which a conformal scalar field modulates matter proper time as $\mathrm{d}\tau/\mathrm{d}t \approx A(\phi)^{1/2}$—addresses that tension through density-dependent screening.
 
-From 341,315 high-purity systems, the analysis identifies a screening transition at $R_s = 2646 \pm 182$ AU (statistical; $\pm 563$ AU total), strongly preferred over both a flat Newtonian profile ($\Delta \chi^2 = 14{,}845$) and a constant boost ($\Delta \chi^2 = 3{,}583$). At large separation the profile saturates at $\alpha_{\rm sat} = 0.366 \pm 0.012$, roughly 35--40% above the Keplerian baseline.
+From 341,315 high-purity systems, the analysis identifies a screening transition at $R_s = 2,646 \pm 182$ AU (statistical; $\pm 609$ AU total), strongly preferred over both a flat Newtonian profile ($\Delta \chi^2 = 14{,}845$) and a constant boost ($\Delta \chi^2 = 3{,}583$). At large separation the profile saturates at $\alpha_{\rm sat} = 0.366 \pm 0.012$, roughly 35--40% above the Keplerian baseline. Broader smooth-transition fits preserve the same few-thousand-AU onset.
 
-The signal also shows the environmental ordering required by TEP. After metallicity-dependent mass corrections and bootstrap uncertainty estimation, the lower-density halo transitions at smaller radius than the higher-density disk ($R_s = 4673 \pm 194$ versus $7159 \pm 1573$ AU), confirmed by a solar-track control ($R_s = 4099 \pm 251$ versus $6885 \pm 1223$ AU; permutation $p = 0.0033$ in both cases). Scrambling tests fail to reproduce the observed screening preference ($p = 0.0066$). These results support the interpretation of the wide-binary anomaly as a kinematic signature of the conformal scalar field emerging from screening at sub-galactic scales.
+The signal also shows the environmental ordering required by TEP. After metallicity-dependent mass corrections and bootstrap uncertainty estimation, the lower-density high-$|Z|$ population transitions at smaller radius than the higher-density midplane ($R_s = 4,673 \pm 194$ versus $7,159 \pm 1,573$ AU), confirmed by a solar-track control ($R_s = 4,099 \pm 239$ versus $6,885 \pm 984$ AU; permutation $p < 10^{-4}$ for the full sample and $p < 10^{-3}$ for the solar track). Scrambling tests fail to reproduce the observed screening preference ($p < 10^{-4}$). The wide-binary anomaly is therefore not a generic low-acceleration excess but a structured, environmentally modulated screening transition—one whose morphology, onset scale, and density dependence are quantitatively consistent with the conformal scalar field of TEP and are not reproduced by MOND with or without the External Field Effect.
 
 ## Repository Structure
 
@@ -42,15 +49,9 @@ To reproduce the analysis and generate the manuscript:
 
 2. **Run Analysis Pipeline:**
    ```bash
-   python3 scripts/steps/step_000_catalog_ingestion.py   # Download Gaia DR3 catalog
-   python3 scripts/steps/step_001_sample_selection.py    # Filter for high-purity binaries
-   python3 scripts/steps/step_002_kinematic_analysis.py  # Calculate v_tilde profiles
-   python3 scripts/steps/step_003_screening_test.py      # Fit TEP screening model
-   python3 scripts/steps/step_004_sample_characterization.py # Generate diagnostic plots
-   python3 scripts/steps/step_005_environment_test.py    # Test environmental dependence
-   python3 scripts/steps/step_006_audit_analysis.py      # Audit for systematic biases
-   python3 scripts/steps/step_007_supplemental_controls.py # Run RV, stratification, and null-control diagnostics
+   python3 scripts/steps/run_all_steps.py
    ```
+   This canonical runner executes `step_000` through `step_011`, including catalog ingestion, kinematic analysis, screening and environmental fits, robustness diagnostics, and the authoritative MOND+EFE comparison.
 
 3. **Build Manuscript:**
    ```bash
@@ -58,6 +59,28 @@ To reproduce the analysis and generate the manuscript:
    ```
    The final manuscript will be available at `15manuscript-tep-wb.md`.
 
+## Citation
+
+```bibtex
+@article{smawfield2026wb,
+  title={The Temporal Equivalence Principle: Density-Dependent Screening in Gaia DR3 Wide Binaries},
+  author={Smawfield, Matthew Lukin},
+  journal={Zenodo},
+  year={2026},
+  doi={10.5281/zenodo.19102062},
+  note={Preprint v0.1 (Kilifi)}
+}
+```
+
 ## License
 
 Creative Commons Attribution 4.0 International (CC-BY-4.0).
+
+## Open Science Statement
+
+This is an open research preprint repository. Manuscript sources, pipeline code, and derived outputs are provided to support transparent inspection and independent reproduction.
+
+## Contact
+
+Email: matthewsmawfield@gmail.com  
+ORCID: [0009-0003-8219-3159](https://orcid.org/0009-0003-8219-3159)

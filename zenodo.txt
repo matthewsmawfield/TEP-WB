@@ -3,31 +3,35 @@
 # Date: 2026-03-19
 # DOI: 10.5281/zenodo.19102062
 
-title: "The Wide Binary Anomaly: Resolving the Gaia DR3 Controversy via Temporal Screening"
+title: "The Temporal Equivalence Principle: Density-Dependent Screening in Gaia DR3 Wide Binaries"
 doi: 10.5281/zenodo.19102062
 version: "v0.1 (Kilifi)"
 date: 2026-03-19
 description: >
-  The Gaia DR3 catalog of over one million wide binaries opens a precise test
-  of gravity in the weak-field regime (a ≲ 10^-10 m/s^2), yet whether the
-  observed velocity excess reflects modified gravity or unresolved systematics
-  remains contested. This paper shows that the Temporal Equivalence Principle
-  (TEP), in which the conformal factor A(phi) modulates matter proper time,
-  resolves that tension through density-dependent screening. From 341,315
-  high-purity systems, the analysis identifies a screening transition at
-  R_s = 2646 ± 182 AU (statistical; ±563 AU total), strongly preferred over
-  both a flat Newtonian profile (Δχ² = 14,845) and a constant boost
-  (Δχ² = 3,583). At large separation the profile saturates at α_sat = 0.366,
-  roughly 35-40% above the Keplerian baseline. The signal also shows the
-  environmental ordering required by TEP. After metallicity-dependent mass
-  corrections and bootstrap uncertainty estimation, the lower-density halo
-  transitions at smaller radius than the higher-density disk
-  (R_s = 4673 ± 194 versus 7159 ± 1573 AU), confirmed by a solar-track
-  control (R_s = 4099 ± 251 versus 6885 ± 1223 AU; permutation p = 0.0033
-  in both cases). Scrambling tests fail to reproduce the observed screening
-  preference (p = 0.0066). These results support the interpretation of the
-  wide-binary anomaly as a kinematic signature of the conformal scalar field
-  emerging from screening at sub-galactic scales.
+  The Gaia DR3 catalog of over one million wide binaries opens a precise
+  window onto gravity in the weak-field regime (a ≲ 10^-10 m/s^2), yet
+  whether the observed velocity excess reflects modified gravity or unresolved
+  systematics remains contested. This paper shows that the Temporal
+  Equivalence Principle (TEP), in which a conformal scalar field modulates
+  matter proper time as dτ/dt ≈ A(φ)^{1/2}, addresses that tension through
+  density-dependent screening. From 341,315 high-purity systems, the analysis
+  identifies a screening transition at R_s = 2,646 ± 182 AU (statistical;
+  ±609 AU total), strongly preferred over both a flat Newtonian profile
+  (Δχ² = 14,845) and a constant boost (Δχ² = 3,583). At large separation
+  the profile saturates at α_sat = 0.366 ± 0.012, roughly 35-40% above the
+  Keplerian baseline. The signal also shows the environmental ordering
+  required by TEP. After metallicity-dependent mass corrections and bootstrap
+  uncertainty estimation, the lower-density high-|Z| population transitions
+  at smaller radius than the higher-density midplane
+  (R_s = 4,673 ± 194 versus 7,159 ± 1,573 AU), confirmed by a solar-track
+  control (R_s = 4,099 ± 239 versus 6,885 ± 984 AU; permutation p < 10^-4
+  for the full sample and p < 10^-3 for the solar track). Scrambling tests
+  fail to reproduce the observed screening preference (p < 10^-4). The
+  wide-binary anomaly is therefore not a generic low-acceleration excess but
+  a structured, environmentally modulated screening transition whose
+  morphology, onset scale, and density dependence are quantitatively
+  consistent with the conformal scalar field of TEP and are not reproduced
+  by MOND with or without the External Field Effect.
 creators:
   - name: "Smawfield, Matthew Lukin"
     orcid: "0009-0003-8219-3159"
@@ -36,6 +40,14 @@ keywords:
   - Gaia DR3
   - modified gravity
   - MOND
-  - temporal equivalence principle
-  - gravitational screening
+  - Temporal Equivalence Principle
+  - TEP
+  - density-dependent screening
+  - chameleon gravity
+  - conformal scalar field
+  - weak-field gravity
+  - gravitational anomaly
+  - dark matter alternatives
+  - stellar dynamics
+  - environmental screening
 license: CC-BY-4.0

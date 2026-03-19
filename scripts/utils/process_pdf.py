@@ -2,8 +2,7 @@
 """Unified PDF Processing Script
 Compresses PDF and embeds comprehensive metadata in one operation.
 
-This script processes the TEP-WB manuscript PDF (Paper 15: "The Wide Binary Anomaly: 
-Resolving the Gaia DR3 Controversy via Temporal Screening") by compressing it 
+This script processes the TEP-WB manuscript PDF (Paper 15: "The Temporal Equivalence Principle: Density-Dependent Screening in Gaia DR3 Wide Binaries") by compressing it 
 for web distribution and embedding complete academic metadata for proper indexing and citation.
 
 Usage:
@@ -152,34 +151,31 @@ def main():
     # Paper metadata - must match manuscript, CITATION.cff, and zenodo.txt
     metadata = {
         # Core identification
-        'Title': 'The Wide Binary Anomaly: Resolving the Gaia DR3 Controversy via Temporal Screening',
+        'Title': 'The Temporal Equivalence Principle: Density-Dependent Screening in Gaia DR3 Wide Binaries',
         'Author': 'Matthew Lukin Smawfield',
         'Creator': 'Matthew Lukin Smawfield',
         
         # Scientific abstract with key results
         'Subject': (
-            'The 2022 release of Gaia Data Release 3 (DR3) provided a catalog of more than a million '
-            'wide binary stars, creating a powerful test of gravity in the extreme weak-field regime. '
-            'Yet the physical interpretation of the signal remains unsettled. Chae (2023, 2024) and '
-            'Hernandez (2023) report a significant anomalous velocity boost of ~20% at wide separations, '
-            'interpreting it as evidence for Modified Newtonian Dynamics (MOND). By contrast, Banik et al. '
-            '(2024) and Pittordis & Sutherland (2025) argue that the same signal may still be explained '
-            'within standard General Relativity through hierarchical triple systems. This paper shows that '
-            'the Temporal Equivalence Principle (TEP) offers a natural resolution. In TEP, a conformal '
-            'scalar field couples to local mass density, so the anomaly appears through density-dependent '
-            'screening rather than as a universal, scale-free boost. The Gaia DR3 sample reveals a '
-            'characteristic transition radius of Rs = 2646 ± 182 AU, with the lower-density halo '
-            'transitioning at smaller radius than the higher-density disk (p = 0.0033). The screening '
-            'profile is strongly preferred over both Newtonian and constant-boost alternatives.'
+            'The Gaia DR3 catalog of over one million wide binaries opens a precise window onto gravity in the weak-field regime (a ≲ 10^-10 m/s^2), yet whether the observed velocity excess reflects modified gravity or unresolved systematics remains contested. This paper shows that the Temporal Equivalence Principle (TEP), in which a conformal scalar field modulates matter proper time as dτ/dt ≈ A(φ)^{1/2}, addresses that tension through density-dependent screening. From 341,315 high-purity systems, the analysis identifies a screening transition at R_s = 2,646 ± 182 AU (statistical; ±609 AU total), strongly preferred over both a flat Newtonian profile (Δχ² = 14,845) and a constant boost (Δχ² = 3,583). At large separation the profile saturates at α_sat = 0.366 ± 0.012, roughly 35-40% above the Keplerian baseline. The signal also shows the environmental ordering required by TEP. After metallicity-dependent mass corrections and bootstrap uncertainty estimation, the lower-density high-|Z| population transitions at smaller radius than the higher-density midplane (R_s = 4,673 ± 194 versus 7,159 ± 1,573 AU), confirmed by a solar-track control (R_s = 4,099 ± 239 versus 6,885 ± 984 AU; permutation p < 10^-4 for the full sample and p < 10^-3 for the solar track). Scrambling tests fail to reproduce the observed screening preference (p < 10^-4). The wide-binary anomaly is therefore not a generic low-acceleration excess but a structured, environmentally modulated screening transition whose morphology, onset scale, and density dependence are quantitatively consistent with the conformal scalar field of TEP and are not reproduced by MOND with or without the External Field Effect.',
         ),
         
         # Keywords for indexing
         'Keywords': (
-            'Wide Binary Stars; Gaia DR3; Modified Newtonian Dynamics; MOND; '
-            'Temporal Equivalence Principle; TEP; Chameleon Screening; '
-            'Scalar-Tensor Gravity; Modified Gravity; Gravitational Anomalies; '
-            'Weak-Field Gravity; Dark Matter; Hierarchical Triples; Stellar Dynamics; '
-            'Galactic Halo; Galactic Disk; Density-Dependent Screening'
+            'Temporal Equivalence Principle; TEP; density-dependent screening; '
+            'chameleon gravity; conformal scalar field; Gaia DR3 wide binaries; '
+            'weak-field gravity tests; MOND; modified Newtonian dynamics; '
+            'velocity excess anomaly; environmental screening; self-screening; '
+            'mass-luminosity relation; metallicity correction; hierarchical triples; '
+            'RUWE astrometry; screening transition radius; saturation amplitude; '
+            'Galactic disk stratification; universal critical density; two-metric geometry; '
+            'proper time modulation; external field effect; gravitational anomaly; '
+            'Keplerian dynamics; astrometric precision; bootstrap uncertainty; '
+            'permutation testing; SPARC rotation curves; cross-scale predictions; '
+            'dark matter alternatives; fifth-force constraints; Ratra-Peeples potential; '
+            'Galactic height dependence; vertical disk dynamics; injection-recovery validation; '
+            'scalar-tensor gravity; modified gravity theories; dark matter; '
+            'gravitational anomalies; stellar dynamics; galactic halo'
         ),
         
         # Production metadata
@@ -194,7 +190,7 @@ def main():
         
         # XMP Dublin Core metadata (exiftool uses these prefixes)
         'XMP-dc:Creator': 'Matthew Lukin Smawfield',
-        'XMP-dc:Title': 'The Wide Binary Anomaly: Resolving the Gaia DR3 Controversy via Temporal Screening',
+        'XMP-dc:Title': 'The Temporal Equivalence Principle: Density-Dependent Screening in Gaia DR3 Wide Binaries',
         'XMP-dc:Description': 'TEP resolution to Gaia DR3 wide-binary controversy via density-dependent temporal screening',
         'XMP-dc:Rights': 'CC BY 4.0',
         'XMP-dc:Identifier': f'doi:{args.doi}',

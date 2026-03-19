@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 const fs = require('fs');
 const path = require('path');
+const { createManuscriptContext, injectPlaceholders } = require('./manuscript-data.js');
 
 class HTMLToMarkdownConverter {
     constructor() { this.output = ''; }
@@ -91,7 +92,8 @@ class HTMLToMarkdownConverter {
         html = html.replace(/\s*<img[^>]+>\s*/gi, (tag) => {
             const srcMatch = tag.match(/src=["']([^"']+)["']/i);
             const altMatch = tag.match(/alt=["']([^"']*)["']/i);
-            const src = srcMatch ? srcMatch[1] : '';
+            const rawSrc = srcMatch ? srcMatch[1] : '';
+            const src = rawSrc.startsWith('figures/') ? `results/${rawSrc}` : rawSrc;
             const alt = altMatch ? altMatch[1] : '';
             return src ? `\n\n![${alt}](${src})\n\n` : '';
         });
@@ -129,12 +131,13 @@ class HTMLToMarkdownConverter {
             if (!fs.existsSync(manifestPath)) throw new Error('manifest.json not found.');
             const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
             const sections = manifest.sections.sort((a, b) => a.order - b.order);
+            const injectionContext = createManuscriptContext();
 
             let allHtml = '';
             for (const section of sections) {
                 const componentPath = path.join(__dirname, 'components', section.file);
                 if (fs.existsSync(componentPath)) {
-                    const html = fs.readFileSync(componentPath, 'utf8');
+                    const html = injectPlaceholders(fs.readFileSync(componentPath, 'utf8'), injectionContext, { failOnUnresolved: true });
                     allHtml += `\n<!-- SECTION: ${section.title} -->\n${html}\n`;
                     console.log(`  ✓ ${section.file} (${(html.length / 1024).toFixed(1)} KB)`);
                 } else {
@@ -143,7 +146,7 @@ class HTMLToMarkdownConverter {
             }
 
             console.log(`  Total HTML: ${(allHtml.length / 1024).toFixed(1)} KB`);
-            const markdownTitle = manifest.title || 'The Temporal Equivalence Principle: Resolving the Gaia DR3 Controversy via Temporal Screening';
+            const markdownTitle = manifest.title || 'The Temporal Equivalence Principle: Density-Dependent Screening in Gaia DR3 Wide Binaries';
             const markdown = `# ${markdownTitle}\n\n` + this.htmlToMarkdown(allHtml);
             const outputPath = path.join(__dirname, '..', '15manuscript-tep-wb.md');
             fs.writeFileSync(outputPath, markdown, 'utf8');

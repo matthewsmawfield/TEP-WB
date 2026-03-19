@@ -4,8 +4,8 @@ authors:
 - family-names: "Smawfield"
   given-names: "Matthew Lukin"
   orcid: "https://orcid.org/0009-0003-8219-3159"
-title: "The Wide Binary Anomaly: Resolving the Gaia DR3 Controversy via Temporal Screening"
-version: "0.1 (Kilifi)"
+title: "The Temporal Equivalence Principle: Density-Dependent Screening in Gaia DR3 Wide Binaries"
+version: "v0.1 (Kilifi)"
 date-released: 2026-03-19
 doi: 10.5281/zenodo.19102062
 repository-code: "https://github.com/matthewsmawfield/TEP-WB"
@@ -17,3 +17,33 @@ keywords:
   - MOND
   - temporal equivalence principle
   - gravitational screening
+  - beyond standard model
+  - extended gravity
+  - gravitational anomalies
+  - wide binary anomaly
+  - gravity screening
+  - density-dependent screening
+  - Milgromian dynamics
+  - AQUAL
+  - Bekenstein-Milgrom
+  - baryonic Tully-Fisher
+  - galactic dynamics
+  - stellar kinematics
+  - astrometry
+  - parallax
+  - proper motion
+  - orbital dynamics
+  - Newtonian dynamics
+  - dark matter
+  - missing mass problem
+  - galaxy rotation curves
+  - stellar systems
+  - binary stars
+  - weak equivalence principle
+  - equivalence principle violation
+  - gravitational constant
+  - G variation
+  - cosmology
+  - observational cosmology
+  - astrophysics
+  - observational astrophysics

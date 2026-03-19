@@ -35,6 +35,8 @@ from astropy.coordinates import SkyCoord
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 from scripts.utils.logger import TEPLogger, set_step_logger, print_status
+from scripts.utils.download_mamajek import download_mamajek
+from scripts.utils.parse_mamajek import clean_mamajek
 
 # G in (km/s)^2 * AU / M_sun
 # G = 6.67430e-11 m^3 / (kg s^2) converted to these units.
@@ -46,10 +48,20 @@ def analyze_kinematics():
     input_path = PROJECT_ROOT / "data" / "processed" / "clean_binary_sample.parquet"
     output_path = PROJECT_ROOT / "data" / "processed" / "kinematic_results.parquet"
     mamajek_path = PROJECT_ROOT / "data" / "processed" / "mamajek_clean.csv"
+    mamajek_raw_path = PROJECT_ROOT / "data" / "raw" / "EEM_dwarf_UBVIJHK_colors_Teff.txt"
 
     if not input_path.exists():
         print_status(f"Clean sample not found at {input_path}. Run step_001 first.", "ERROR")
         sys.exit(1)
+
+    if not mamajek_path.exists():
+        if not mamajek_raw_path.exists():
+            print_status("Mamajek table missing. Downloading source table...", "PROCESS")
+            if not download_mamajek(mamajek_raw_path):
+                print_status("Failed to download Mamajek source table.", "ERROR")
+                sys.exit(1)
+        print_status("Preparing cleaned Mamajek table...", "PROCESS")
+        clean_mamajek(mamajek_raw_path, mamajek_path)
 
     print_status("Loading clean sample...", "PROCESS")
     df = pd.read_parquet(input_path)

@@ -11,8 +11,10 @@ This script:
 4. Quantifies robustness through effect size and permutation p-values
 """
 
+import os
 import sys
 from pathlib import Path
+from multiprocessing import Pool
 
 import numpy as np
 import pandas as pd
@@ -92,10 +94,10 @@ def fit_profile(profile):
             profile["v_tilde_norm"],
             sigma=profile["sem_norm"],
             p0=[5000.0, 0.2],
-            bounds=([100.0, 0.0], [50000.0, 0.5]),
+            bounds=([100.0, 0.0], [50000.0, 0.8]),
             maxfev=10000,
         )
-    except Exception:
+    except (RuntimeError, ValueError):
         return {"fit_success": False}
 
     r_s_fit = float(popt[0])
@@ -179,6 +181,121 @@ def distance_scramble(values, codes, rng):
     return scrambled
 
 
+# ---------------------------------------------------------------------------
+# Pure-numpy helpers + multiprocessing workers for null controls
+# ---------------------------------------------------------------------------
+
+def _numpy_build_and_fit(sep, vals, bins, bin_centers):
+    """Pure-numpy: bin, normalize, fit TEP + null models, return stats dict."""
+    n_bins = len(bins) - 1
+    bin_idx = np.digitize(sep, bins)
+
+    meds   = np.empty(n_bins)
+    stds   = np.empty(n_bins)
+    counts = np.empty(n_bins)
+    valid  = np.zeros(n_bins, dtype=bool)
+
+    for i in range(n_bins):
+        mask = bin_idx == (i + 1)
+        cnt  = mask.sum()
+        if cnt > 0:
+            meds[i]   = np.median(vals[mask])
+            stds[i]   = np.std(vals[mask])
+            counts[i] = cnt
+            valid[i]  = np.isfinite(meds[i]) and np.isfinite(stds[i]) and cnt > 0
+
+    if valid.sum() < 8:
+        return None
+
+    x = bin_centers[valid]
+    m = meds[valid]
+    s = stds[valid]
+    c = counts[valid]
+    sem = 1.253 * s / np.sqrt(c)
+
+    n_base = min(5, len(m))
+    baseline = np.mean(m[:n_base])
+    if not np.isfinite(baseline) or baseline <= 0:
+        return None
+
+    v_norm   = m / baseline
+    sem_norm = sem / baseline
+
+    good = np.isfinite(v_norm) & np.isfinite(sem_norm) & (sem_norm > 0)
+    if good.sum() < 8:
+        return None
+    x        = x[good]
+    v_norm   = v_norm[good]
+    sem_norm = sem_norm[good]
+
+    try:
+        popt, _ = curve_fit(
+            tep_screening_model, x, v_norm, sigma=sem_norm,
+            p0=[5000.0, 0.2], bounds=([100.0, 0.0], [50000.0, 0.8]),
+            maxfev=10000,
+        )
+    except (RuntimeError, ValueError):
+        return None
+
+    r_s   = float(popt[0])
+    alpha = float(popt[1])
+    residuals = v_norm - tep_screening_model(x, *popt)
+    chi2  = float(np.sum((residuals / sem_norm)**2))
+
+    flat_chi2  = float(np.sum(((v_norm - 1.0) / sem_norm)**2))
+    weights    = 1.0 / np.square(sem_norm)
+    alpha_c    = np.clip(np.sum(weights * (v_norm - 1.0)) / np.sum(weights), 0.0, 0.5)
+    const_chi2 = float(np.sum(((v_norm - (1.0 + alpha_c)) / sem_norm)**2))
+
+    return {
+        'r_s_au': r_s,
+        'alpha': alpha,
+        'delta_chi2_vs_flat': flat_chi2 - chi2,
+        'delta_chi2_vs_constant_boost': const_chi2 - chi2,
+    }
+
+
+_null_shared = {}  # populated by Pool initializer
+
+
+def _init_null_worker(sep_arr, val_arr, dist_codes_arr, bins_arr, bc_arr):
+    _null_shared['sep']   = sep_arr
+    _null_shared['val']   = val_arr
+    _null_shared['codes'] = dist_codes_arr
+    _null_shared['bins']  = bins_arr
+    _null_shared['bc']    = bc_arr
+
+
+def _null_batch_worker(args):
+    """Process a batch of scramble iterations in one worker."""
+    seed, batch_size, mode = args
+    rng   = np.random.default_rng(seed)
+    sep   = _null_shared['sep']
+    val   = _null_shared['val']
+    codes = _null_shared['codes']
+    bins  = _null_shared['bins']
+    bc    = _null_shared['bc']
+
+    results = []
+    for i in range(batch_size):
+        if mode == 'global':
+            scrambled = rng.permutation(val)
+        else:
+            scrambled = val.copy()
+            for code in np.unique(codes[codes >= 0]):
+                idx = np.where(codes == code)[0]
+                scrambled[idx] = rng.permutation(val[idx])
+
+        fit = _numpy_build_and_fit(sep, scrambled, bins, bc)
+        if fit is not None:
+            results.append({
+                'mode': mode,
+                'iteration': i,
+                **fit,
+            })
+    return results
+
+
 def scramble_null_controls(frame, rng, n_iter=NULL_ITERATIONS):
     base = frame[["sep_AU", "dist_pc", "v_tilde"]].dropna().copy()
     observed_profile, _ = build_profile(base)
@@ -187,37 +304,36 @@ def scramble_null_controls(frame, rng, n_iter=NULL_ITERATIONS):
         return pd.DataFrame(), pd.DataFrame()
 
     base["dist_bin"] = pd.qcut(base["dist_pc"], q=4, duplicates="drop")
-    values = base["v_tilde"].to_numpy()
+    sep_np     = base["sep_AU"].to_numpy()
+    val_np     = base["v_tilde"].to_numpy()
     dist_codes = base["dist_bin"].cat.codes.to_numpy()
-    rows = []
+    bins       = GLOBAL_BINS
+    bin_centers = 10**(0.5 * (np.log10(bins[:-1]) + np.log10(bins[1:])))
 
+    n_workers  = min(os.cpu_count() or 4, 10)
+    batch_size = n_iter // n_workers
+    remainder  = n_iter % n_workers
+
+    all_rows = []
     for mode in ["global", "within_distance_quartile"]:
-        for iteration in range(n_iter):
-            if mode == "global":
-                scrambled = rng.permutation(values)
-            else:
-                scrambled = distance_scramble(values, dist_codes, rng)
+        seeds = rng.integers(0, 2**63, size=n_workers)
+        batch_args = [
+            (int(seeds[i]), batch_size + (1 if i < remainder else 0), mode)
+            for i in range(n_workers)
+        ]
+        with Pool(
+            processes=n_workers,
+            initializer=_init_null_worker,
+            initargs=(sep_np, val_np, dist_codes, bins, bin_centers),
+        ) as pool:
+            batch_results = pool.map(_null_batch_worker, batch_args)
+        for batch in batch_results:
+            all_rows.extend(batch)
 
-            work = base[["sep_AU"]].copy()
-            work["v_tilde_scrambled"] = scrambled
-            profile, _ = build_profile(work, value_col="v_tilde_scrambled")
-            fit = fit_profile(profile)
-            if fit.get("fit_success"):
-                rows.append(
-                    {
-                        "mode": mode,
-                        "iteration": iteration,
-                        "r_s_au": fit["r_s_au"],
-                        "alpha": fit["alpha"],
-                        "delta_chi2_vs_flat": fit["delta_chi2_vs_flat"],
-                        "delta_chi2_vs_constant_boost": fit["delta_chi2_vs_constant_boost"],
-                    }
-                )
-
-    raw = pd.DataFrame(rows)
+    raw = pd.DataFrame(all_rows)
     summaries = []
     for mode in ["global", "within_distance_quartile"]:
-        sub = raw[raw["mode"] == mode].copy()
+        sub = raw[raw["mode"] == mode].copy() if len(raw) > 0 else pd.DataFrame()
         if len(sub) == 0:
             summaries.append(
                 {
@@ -250,7 +366,7 @@ def scramble_null_controls(frame, rng, n_iter=NULL_ITERATIONS):
             }
         )
         print_status(
-            f"Null scramble ({mode}): p(Δχ2 vs flat) = {p_flat:.4f}, p(Δχ2 vs constant boost) = {p_const:.4f} across {len(sub)} valid iterations",
+            f"Null scramble ({mode}): p(Δχ2 vs flat) = {p_flat:.6f}, p(Δχ2 vs constant boost) = {p_const:.6f} across {len(sub)} valid iterations",
             "RESULT",
         )
 

@@ -104,7 +104,7 @@ def ingest_catalog():
             dpm_total = np.sqrt(dpmra**2 + dpmdec**2)  # mas/yr
             
             # The 4.74 constant is the exact geometrical mapping of angular motion to physical speed.
-            df['v_relative_observed'] = 4.74 * dpm_total * df['distance_pc']
+            df['v_relative_observed'] = 4.74 * 1e-3 * dpm_total * df['distance_pc']
             
             # Dimensionless velocity ratio (key observable for testing gravity)
             # This standardizes the kinematics independent of the exact mass or orbital scale.

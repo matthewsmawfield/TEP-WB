@@ -1,9 +1,12 @@
-import pandas as pd
-import numpy as np
+from pathlib import Path
 
-def clean_mamajek():
-    # Read the file line by line
-    with open('data/raw/EEM_dwarf_UBVIJHK_colors_Teff.txt', 'r') as f:
+import pandas as pd
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+
+
+def clean_mamajek(input_path, output_path):
+    with open(input_path, 'r') as f:
         lines = f.readlines()
         
     # Extract data lines
@@ -38,9 +41,16 @@ def clean_mamajek():
                     })
             except ValueError:
                 pass
-                
+
     df = pd.DataFrame(processed_data)
-    df.to_csv('data/processed/mamajek_clean.csv', index=False)
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(output, index=False)
     print(f"Parsed {len(df)} rows from Mamajek table.")
-    
-clean_mamajek()
+
+
+if __name__ == "__main__":
+    clean_mamajek(
+        PROJECT_ROOT / "data" / "raw" / "EEM_dwarf_UBVIJHK_colors_Teff.txt",
+        PROJECT_ROOT / "data" / "processed" / "mamajek_clean.csv",
+    )

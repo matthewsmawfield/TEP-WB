@@ -99,7 +99,7 @@ def fit_profile(profile):
             bounds=([100.0, 0.0], [50000.0, 0.8]),
             maxfev=10000,
         )
-    except Exception:
+    except (RuntimeError, ValueError):
         return {"fit_success": False}
 
     r_s_fit = float(popt[0])
@@ -306,6 +306,195 @@ def run_injection_recovery():
         )
 
     # =========================================================================
+    # TEST 4: Eccentricity distribution sensitivity
+    # =========================================================================
+    print_status("Test 4: Eccentricity Distribution Sensitivity", "PROCESS")
+
+    G_AU_kms2 = 887.1  # G in (km/s)^2 * AU / M_sun
+    M_total_ecc = 1.2   # median binary mass in M_sun
+    N_ORBITS = 500_000
+
+    def solve_kepler_vec(M_anom, e, tol=1e-10, max_iter=50):
+        """Vectorized Kepler equation solver via Newton-Raphson."""
+        E = M_anom.copy()
+        for _ in range(max_iter):
+            dE = (M_anom - E + e * np.sin(E)) / (1.0 - e * np.cos(E))
+            E += dE
+            if np.max(np.abs(dE)) < tol:
+                break
+        return E
+
+    def simulate_ecc_population(n, ecc_power, rng_loc, r_s_inj, alpha_inj):
+        """Simulate binary population with f(e) ∝ e^ecc_power.
+        Applies TEP enhancement at the TRUE 3D separation, then projects
+        to the sky plane. Returns projected separation and v_tilde."""
+        mu = G_AU_kms2 * M_total_ecc
+
+        # Semi-major axis: log-uniform 50 - 30000 AU
+        a = 10 ** rng_loc.uniform(np.log10(50), np.log10(30000), n)
+
+        # Eccentricity: f(e) ∝ e^k, truncated at e_max
+        e_max = 0.95
+        e = e_max * rng_loc.uniform(0, 1, n) ** (1.0 / (ecc_power + 1.0))
+
+        # Random orbital phase (mean anomaly)
+        M_anom = rng_loc.uniform(0, 2 * np.pi, n)
+        E = solve_kepler_vec(M_anom, e)
+
+        # True anomaly
+        nu = 2.0 * np.arctan2(
+            np.sqrt(1 + e) * np.sin(E / 2), np.sqrt(1 - e) * np.cos(E / 2)
+        )
+
+        # Semi-latus rectum & true separation
+        p = a * (1.0 - e ** 2)
+        r = a * (1.0 - e * np.cos(E))
+
+        # TEP enhancement at TRUE separation r
+        eta = 1.0 + alpha_inj * (1.0 - np.exp(-r / r_s_inj))
+
+        # Velocity in perifocal frame (km/s), enhanced by TEP
+        sqrt_mu_p = np.sqrt(mu / p)
+        v_p = sqrt_mu_p * (-np.sin(nu)) * eta
+        v_q = sqrt_mu_p * (e + np.cos(nu)) * eta
+
+        # Position in perifocal frame (AU)
+        r_p_pos = r * np.cos(nu)
+        r_q_pos = r * np.sin(nu)
+
+        # Random 3D orientation
+        cos_i = rng_loc.uniform(-1, 1, n)
+        omega = rng_loc.uniform(0, 2 * np.pi, n)
+        Omega = rng_loc.uniform(0, 2 * np.pi, n)
+        cO, sO = np.cos(Omega), np.sin(Omega)
+        cw, sw = np.cos(omega), np.sin(omega)
+        ci = cos_i
+
+        # Thiele-Innes rotation to sky plane
+        A11 = cO * cw - sO * sw * ci
+        A12 = -cO * sw - sO * cw * ci
+        A21 = sO * cw + cO * sw * ci
+        A22 = -sO * sw + cO * cw * ci
+
+        X_pos = A11 * r_p_pos + A12 * r_q_pos
+        Y_pos = A21 * r_p_pos + A22 * r_q_pos
+        s_proj = np.sqrt(X_pos ** 2 + Y_pos ** 2)
+
+        Vx = A11 * v_p + A12 * v_q
+        Vy = A21 * v_p + A22 * v_q
+        v_proj = np.sqrt(Vx ** 2 + Vy ** 2)
+
+        # v_tilde = projected velocity / Keplerian circular at projected separation
+        v_circ = np.sqrt(mu / s_proj)
+        v_tilde_out = v_proj / v_circ
+
+        return s_proj, v_tilde_out
+
+    ecc_powers = [0.0, 0.5, 1.0, 1.5, 2.0]
+    ecc_labels = [
+        "Uniform (k=0)",
+        "Sub-thermal (k=0.5)",
+        "Thermal (k=1)",
+        "Super-thermal (k=1.5)",
+        "Super-thermal (k=2)",
+    ]
+    ecc_results = []
+
+    for k_ecc, label_ecc in zip(ecc_powers, ecc_labels):
+        s_sim, vt_sim = simulate_ecc_population(
+            N_ORBITS, k_ecc, rng, true_r_s, true_alpha
+        )
+
+        # Filter valid
+        valid = np.isfinite(s_sim) & np.isfinite(vt_sim) & (s_sim > 0) & (vt_sim > 0)
+        s_v = s_sim[valid]
+        vt_v = vt_sim[valid]
+
+        # Bin
+        bin_idx = np.digitize(s_v, GLOBAL_BINS) - 1
+        centers = 10 ** (0.5 * (np.log10(GLOBAL_BINS[:-1]) + np.log10(GLOBAL_BINS[1:])))
+        meds, sems_arr, ctrs = [], [], []
+        for b in range(len(GLOBAL_BINS) - 1):
+            vals = vt_v[bin_idx == b]
+            if len(vals) > 50:
+                meds.append(float(np.median(vals)))
+                sems_arr.append(1.253 * float(np.std(vals)) / np.sqrt(len(vals)))
+                ctrs.append(centers[b])
+
+        if len(meds) < 8:
+            ecc_results.append(
+                {"ecc_power": k_ecc, "label": label_ecc, "alpha_recovered": np.nan}
+            )
+            print_status(f"  {label_ecc}: insufficient bins", "WARNING")
+            continue
+
+        meds = np.array(meds)
+        sems_arr = np.array(sems_arr)
+        ctrs = np.array(ctrs)
+
+        # Normalize to inner baseline
+        inner = ctrs < 500
+        baseline_ecc = float(np.mean(meds[inner])) if inner.sum() > 0 else float(meds[0])
+        v_norm_ecc = meds / baseline_ecc
+        sem_norm_ecc = sems_arr / baseline_ecc
+
+        try:
+            popt_ecc, pcov_ecc = curve_fit(
+                tep_screening_model,
+                ctrs,
+                v_norm_ecc,
+                sigma=sem_norm_ecc,
+                p0=[2646.0, 0.3],
+                bounds=([100, 0], [50000, 0.8]),
+                maxfev=10000,
+            )
+            rs_ecc = float(popt_ecc[0])
+            alpha_ecc = float(popt_ecc[1])
+            alpha_ecc_err = float(np.sqrt(np.diag(pcov_ecc))[1])
+        except (RuntimeError, ValueError):
+            rs_ecc = alpha_ecc = alpha_ecc_err = np.nan
+
+        shift_pct = (
+            (alpha_ecc - true_alpha) / true_alpha * 100
+            if np.isfinite(alpha_ecc)
+            else np.nan
+        )
+        ecc_results.append(
+            {
+                "ecc_power": k_ecc,
+                "label": label_ecc,
+                "alpha_recovered": alpha_ecc,
+                "alpha_err": alpha_ecc_err,
+                "alpha_shift_pct": shift_pct,
+                "r_s_recovered": rs_ecc,
+            }
+        )
+        print_status(
+            f"  {label_ecc}: α_rec = {alpha_ecc:.4f} (shift {shift_pct:+.1f}%), "
+            f"R_s = {rs_ecc:.0f} AU",
+            "RESULT",
+        )
+
+    # Compute eccentricity systematic envelope
+    thermal_alpha_ecc = next(
+        (r["alpha_recovered"] for r in ecc_results if r["ecc_power"] == 1.0), np.nan
+    )
+    if np.isfinite(thermal_alpha_ecc):
+        valid_alphas = [
+            r["alpha_recovered"]
+            for r in ecc_results
+            if np.isfinite(r.get("alpha_recovered", np.nan))
+        ]
+        max_shift_ecc = max(abs(a - thermal_alpha_ecc) for a in valid_alphas)
+        max_shift_ecc_pct = max_shift_ecc / thermal_alpha_ecc * 100
+        print_status(
+            f"Eccentricity systematic on α_sat: ±{max_shift_ecc:.4f} (±{max_shift_ecc_pct:.1f}%)",
+            "RESULT",
+        )
+    else:
+        max_shift_ecc = max_shift_ecc_pct = np.nan
+
+    # =========================================================================
     # SAVE RESULTS
     # =========================================================================
     outputs_dir = PROJECT_ROOT / "results" / "outputs"
@@ -353,12 +542,20 @@ def run_injection_recovery():
         outputs_dir / "injection_recovery_sweep.csv", index=False
     )
 
+    pd.DataFrame(ecc_results).to_csv(
+        outputs_dir / "eccentricity_sensitivity.csv", index=False
+    )
+
     print_status(
         f"Saved injection-recovery results to {outputs_dir / 'injection_recovery_summary.csv'}",
         "SUCCESS",
     )
     print_status(
         f"Saved sweep results to {outputs_dir / 'injection_recovery_sweep.csv'}",
+        "SUCCESS",
+    )
+    print_status(
+        f"Saved eccentricity sensitivity to {outputs_dir / 'eccentricity_sensitivity.csv'}",
         "SUCCESS",
     )
 
