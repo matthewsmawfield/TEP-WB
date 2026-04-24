@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite it as below."
+authors:
+  - family-names: "Smawfield"
+    given-names: "Matthew Lukin"
+    orcid: "https://orcid.org/0009-0003-8219-3159"
+title: "Temporal Equivalence Principle: Density-Dependent Screening in Gaia DR3 Wide Binaries"
+version: "v0.2 (Kilifi)"
+date-released: 2026-03-19
+doi: 10.5281/zenodo.19102062
+url: "https://github.com/matthewsmawfield/TEP-WB"
+license: CC-BY-4.0
+keywords:
+  - Gravitation
+  - Astrometry
+  - wide binaries
+  - Galaxy: disk
+  - Cosmology: dark matter
+  - Cosmology: modified gravity
+  - Temporal Equivalence Principle
+  - TEP
+  - density-dependent screening
+  - chameleon gravity
+  - Gaia DR3
+  - MOND
+  - weak-field gravity
+  - gravitational anomaly
+  - environmental screening
+  - stellar dynamics
