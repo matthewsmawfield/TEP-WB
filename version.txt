@@ -1,0 +1,5 @@
+v0.2 (Kilifi) - Temporal Topology Nomenclature Update
+
+- Adopted v0.7 TEP geometric screening nomenclature: replaced thin-shell terminology with continuous Temporal Topology and formalized Temporal Shear (∇φ) across all analysis steps.
+- Updated `tep_model.py`, `step_003_screening_test.py`, and `step_005_environment_test.py` with continuous-field gradient definitions.
+- Synchronized version metadata and citation files to v0.2; updated publication date.

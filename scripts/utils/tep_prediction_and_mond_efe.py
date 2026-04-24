@@ -143,7 +143,7 @@ def aic(chi2, k):
 
 def main():
     # ── Load binned profile ───────────────────────────────────────────
-    data_path = PROJECT_ROOT / "results" / "outputs" / "screening_test_results.csv"
+    data_path = PROJECT_ROOT / "results" / "outputs" / "003_screening_test_results.csv"
     df = pd.read_csv(data_path)
     s   = df["sep_AU"].values
     v   = df["v_tilde_norm"].values
@@ -178,7 +178,7 @@ def main():
     print("=" * 60)
 
     g_TEP = 5.0e-10  # m/s^2, from Smawfield 2025b (Paper 7, SPARC fits)
-    R_s_obs = 2646.0  # AU
+    R_s_obs = 2461.0  # AU
 
     # Mass at the transition bins (bins 10-12, separations 1715-3363 AU)
     M_transition = np.mean(M_per_bin[10:13])
@@ -370,7 +370,7 @@ def main():
 
     # ── Save results ──────────────────────────────────────────────────
     out_df = pd.DataFrame(results)
-    out_path = PROJECT_ROOT / "results" / "outputs" / "mond_efe_comparison.csv"
+    out_path = PROJECT_ROOT / "results" / "outputs" / "011_mond_efe_comparison.csv"
     out_df.to_csv(out_path, index=False)
     print(f"\nResults saved to {out_path}")
 

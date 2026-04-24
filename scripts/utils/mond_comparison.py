@@ -80,7 +80,7 @@ def aic(chi2, k):
 
 def main():
     # Load binned profile
-    data_path = PROJECT_ROOT / "results" / "outputs" / "screening_test_results.csv"
+    data_path = PROJECT_ROOT / "results" / "outputs" / "003_screening_test_results.csv"
     df = pd.read_csv(data_path)
 
     s   = df["sep_AU"].values
@@ -178,7 +178,7 @@ def main():
               f"{v_mond_s[i]:8.4f}  {res_t:+8.4f}  {res_m:+8.4f}")
 
     # ── Save results ──────────────────────────────────────────────────
-    out_path = PROJECT_ROOT / "results" / "outputs" / "mond_comparison.csv"
+    out_path = PROJECT_ROOT / "results" / "outputs" / "011_mond_comparison.csv"
     out_df = pd.DataFrame({
         "model": ["TEP_exponential", "MOND_simple_nu", "MOND_standard_nu"],
         "k": [2, 1, 1],

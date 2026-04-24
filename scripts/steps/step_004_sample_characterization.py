@@ -69,7 +69,7 @@ def characterize_sample():
     plt.ylabel('Count')
     plt.title('Distance Distribution of Wide Binary Sample')
     plt.grid(alpha=0.3)
-    plt.savefig(figures_dir / "dist_distribution.png", dpi=600)
+    plt.savefig(figures_dir / "004_dist_distribution.png", dpi=600)
     print_status("Saved dist_distribution.png", "SUCCESS")
     
     # 2. Separation Distribution (Logarithmic)
@@ -81,7 +81,7 @@ def characterize_sample():
     plt.ylabel('Count')
     plt.title('Projected Separation Distribution')
     plt.grid(alpha=0.3)
-    plt.savefig(figures_dir / "sep_distribution.png", dpi=600)
+    plt.savefig(figures_dir / "004_sep_distribution.png", dpi=600)
     print_status("Saved sep_distribution.png", "SUCCESS")
     
     # 3. Mass vs Mass (Component Hierarchy)
@@ -95,7 +95,7 @@ def characterize_sample():
     plt.title('Component Masses')
     plt.plot([0, 2], [0, 2], 'w--', alpha=0.5)
     plt.grid(alpha=0.3)
-    plt.savefig(figures_dir / "mass_distribution.png", dpi=600)
+    plt.savefig(figures_dir / "004_mass_distribution.png", dpi=600)
     print_status("Saved mass_distribution.png", "SUCCESS")
     
     # 4. Sky Map (Equatorial Projection)
@@ -111,7 +111,7 @@ def characterize_sample():
         plt.colorbar(label='Log10(Count)', orientation='horizontal', pad=0.1)
         plt.title('Sky Distribution (Equatorial)')
         plt.grid(True, alpha=0.3)
-        plt.savefig(figures_dir / "sky_distribution.png", dpi=600)
+        plt.savefig(figures_dir / "004_sky_distribution.png", dpi=600)
         print_status("Saved sky_distribution.png", "SUCCESS")
     else:
         print_status("RA/Dec columns missing for sky map.", "WARNING")

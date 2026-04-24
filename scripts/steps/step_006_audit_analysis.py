@@ -51,7 +51,7 @@ def perform_audit():
         
     df = pd.read_parquet(input_path)
     
-    summary_path = PROJECT_ROOT / "results" / "outputs" / "screening_fit_summary.csv"
+    summary_path = PROJECT_ROOT / "results" / "outputs" / "003_screening_fit_summary.csv"
     if not summary_path.exists():
         print_status("Screening fit summary missing. Run step_003 first.", "ERROR")
         sys.exit(1)
@@ -108,7 +108,7 @@ def perform_audit():
         plt.legend()
         plt.grid(True, alpha=0.3)
         
-        fig_path = figures_dir / "cmd_audit.png"
+        fig_path = figures_dir / "006_cmd_audit.png"
         plt.savefig(fig_path, dpi=300)
         print_status(f"Saved CMD audit to {fig_path}", "SUCCESS")
         

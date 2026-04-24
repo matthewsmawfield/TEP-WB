@@ -1,9 +1,9 @@
 {
-  "title": "The Temporal Equivalence Principle: Density-Dependent Screening in Gaia DR3 Wide Binaries",
+  "title": "Temporal Equivalence Principle: Density-Dependent Screening in Gaia DR3 Wide Binaries",
   "short_title": "TEP-WB: Density-Dependent Screening",
   "author": "Matthew Lukin Smawfield",
-  "version": "v0.1 (Kilifi)",
-  "date": "2026-03-19",
+  "version": "v0.2 (Kilifi)",
+  "date": "2026-04-24",
   "sections": [
     {
       "id": "abstract",

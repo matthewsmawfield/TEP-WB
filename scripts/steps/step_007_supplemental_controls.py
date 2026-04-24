@@ -412,11 +412,11 @@ def perform_supplemental_controls():
 
     outputs_dir = PROJECT_ROOT / "results" / "outputs"
     outputs_dir.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame(subset_rows).to_csv(outputs_dir / "supplementary_subset_controls.csv", index=False)
-    null_summary.to_csv(outputs_dir / "supplementary_null_controls.csv", index=False)
-    null_raw.to_csv(outputs_dir / "supplementary_null_control_draws.csv", index=False)
-    print_status(f"Saved supplemental subset controls to {outputs_dir / 'supplementary_subset_controls.csv'}", "SUCCESS")
-    print_status(f"Saved supplemental null controls to {outputs_dir / 'supplementary_null_controls.csv'}", "SUCCESS")
+    pd.DataFrame(subset_rows).to_csv(outputs_dir / "007_supplementary_subset_controls.csv", index=False)
+    null_summary.to_csv(outputs_dir / "007_supplementary_null_controls.csv", index=False)
+    null_raw.to_csv(outputs_dir / "007_supplementary_null_control_draws.csv", index=False)
+    print_status(f"Saved supplemental subset controls to {PROJECT_ROOT / 'results' / 'outputs' / '007_supplementary_subset_controls.csv'}", "SUCCESS")
+    print_status(f"Saved supplemental null controls to {PROJECT_ROOT / 'results' / 'outputs' / '007_supplementary_null_controls.csv'}", "SUCCESS")
 
 
 if __name__ == "__main__":

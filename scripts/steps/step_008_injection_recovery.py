@@ -29,15 +29,18 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from scripts.utils.logger import TEPLogger, set_step_logger, print_status
-from scripts.steps.step_003_screening_test import (
+from scripts.utils.tep_model import (
     tep_screening_model,
     flat_newtonian_model,
     constant_boost_model,
+    GLOBAL_BINS,
+    build_profile,
+)
+from scripts.steps.step_003_screening_test import (
     chi2_statistic,
     information_criteria,
 )
 
-GLOBAL_BINS = np.logspace(np.log10(50), np.log10(30000), 20)
 N_REALIZATIONS = 100
 SEED = 271828
 
@@ -183,8 +186,18 @@ def run_injection_recovery():
     # =========================================================================
     print_status("Test 1: Recovering known TEP signal at observed parameters", "PROCESS")
 
-    true_r_s = 2646.0
-    true_alpha = 0.366
+    # Load fitted parameters from screening analysis (avoids hardcoding)
+    summary_path = PROJECT_ROOT / "results" / "outputs" / "003_screening_fit_summary.csv"
+    if summary_path.exists():
+        fit_summary = pd.read_csv(summary_path)
+        true_r_s = float(fit_summary.loc[0, 'r_s_au'])
+        true_alpha = float(fit_summary.loc[0, 'alpha'])
+        print_status(f"Loaded fitted parameters: R_s = {true_r_s:.1f} AU, alpha = {true_alpha:.4f}", "INFO")
+    else:
+        # Fallback values if screening analysis hasn't been run yet
+        true_r_s = 2461.0
+        true_alpha = 0.380
+        print_status(f"Using default parameters: R_s = {true_r_s:.1f} AU, alpha = {true_alpha:.4f}", "WARNING")
 
     recovered_rs = []
     recovered_alpha = []
@@ -237,7 +250,7 @@ def run_injection_recovery():
     null_dchi2 = []
 
     for i in range(N_REALIZATIONS):
-        mock = inject_signal(df, 2646.0, 0.0, rng)
+        mock = inject_signal(df, 2461.0, 0.0, rng)
         profile, _ = build_profile(mock)
         fit = fit_profile(profile)
         if fit.get("fit_success"):
@@ -264,7 +277,7 @@ def run_injection_recovery():
     # =========================================================================
     print_status("Test 3: Recovery fidelity across injected R_s values", "PROCESS")
 
-    sweep_rs_values = [1000, 2000, 2646, 3500, 5000, 8000]
+    sweep_rs_values = [1000, 2000, 2461, 3500, 5000, 8000]
     sweep_results = []
 
     for inject_rs in sweep_rs_values:
@@ -444,7 +457,7 @@ def run_injection_recovery():
                 ctrs,
                 v_norm_ecc,
                 sigma=sem_norm_ecc,
-                p0=[2646.0, 0.3],
+                p0=[2461.0, 0.3],
                 bounds=([100, 0], [50000, 0.8]),
                 maxfev=10000,
             )
@@ -520,7 +533,7 @@ def run_injection_recovery():
             },
             {
                 "test": "null_injection",
-                "injected_r_s": 2646.0,
+                "injected_r_s": 2461.0,
                 "injected_alpha": 0.0,
                 "n_realizations": N_REALIZATIONS,
                 "n_successful": len(null_dchi2),
@@ -536,26 +549,26 @@ def run_injection_recovery():
             },
         ]
     )
-    summary.to_csv(outputs_dir / "injection_recovery_summary.csv", index=False)
+    summary.to_csv(outputs_dir / "008_injection_recovery_summary.csv", index=False)
 
     pd.DataFrame(sweep_results).to_csv(
-        outputs_dir / "injection_recovery_sweep.csv", index=False
+        outputs_dir / "008_injection_recovery_sweep.csv", index=False
     )
 
     pd.DataFrame(ecc_results).to_csv(
-        outputs_dir / "eccentricity_sensitivity.csv", index=False
+        outputs_dir / "008_eccentricity_sensitivity.csv", index=False
     )
 
     print_status(
-        f"Saved injection-recovery results to {outputs_dir / 'injection_recovery_summary.csv'}",
+        f"Saved injection-recovery results to {outputs_dir / '008_injection_recovery_summary.csv'}",
         "SUCCESS",
     )
     print_status(
-        f"Saved sweep results to {outputs_dir / 'injection_recovery_sweep.csv'}",
+        f"Saved sweep results to {outputs_dir / '008_injection_recovery_sweep.csv'}",
         "SUCCESS",
     )
     print_status(
-        f"Saved eccentricity sensitivity to {outputs_dir / 'eccentricity_sensitivity.csv'}",
+        f"Saved eccentricity sensitivity to {outputs_dir / '008_eccentricity_sensitivity.csv'}",
         "SUCCESS",
     )
 

@@ -1,4 +1,0 @@
-# ResearchGate-Optimized Keywords (General/Broad)
-# Maximum 20 tags, comma-separated, accessible high-level terms
-
-researchgate_keywords: "Modified Gravity, Dark Matter, Gravitational Physics, Cosmology, Theoretical Physics, Astrophysics, Wide Binary Stars, Stellar Dynamics, Gaia Mission, Weak Field Gravity, Gravitational Anomaly, Alternative Gravity, Scalar Field, Chameleon Gravity, Galaxy Dynamics, Stellar Populations, Astrophysical Testing, Fundamental Physics, Cosmological Models, Observational Astronomy"

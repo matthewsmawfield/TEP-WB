@@ -2,7 +2,7 @@
 """Unified PDF Processing Script
 Compresses PDF and embeds comprehensive metadata in one operation.
 
-This script processes the TEP-WB manuscript PDF (Paper 15: "The Temporal Equivalence Principle: Density-Dependent Screening in Gaia DR3 Wide Binaries") by compressing it 
+This script processes the TEP-WB manuscript PDF (Paper 13: "The Temporal Equivalence Principle: Density-Dependent Screening in Gaia DR3 Wide Binaries") by compressing it 
 for web distribution and embedding complete academic metadata for proper indexing and citation.
 
 Usage:
@@ -179,7 +179,7 @@ def main():
         ),
         
         # Production metadata
-        'Producer': 'TEP-WB Research Project (Paper 15) - Version 0.1 (Kilifi)',
+        'Producer': 'TEP-WB Research Project (Paper 13) - Version 0.2 (Kilifi)',
         
         # Rights and identifiers
         'Copyright': 'Creative Commons Attribution 4.0 International License (CC BY 4.0)',

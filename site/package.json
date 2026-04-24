@@ -1,7 +1,7 @@
 {
   "name": "tep-wb-site",
   "version": "0.1.0",
-  "description": "The Temporal Equivalence Principle: Density-Dependent Screening in Gaia DR3 Wide Binaries",
+  "description": "Temporal Equivalence Principle: Density-Dependent Screening in Gaia DR3 Wide Binaries",
   "main": "index.html",
   "scripts": {
     "dev": "node dev-server.js",

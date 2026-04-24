@@ -204,8 +204,8 @@ def normalization_sensitivity(df):
             sub["window_start_AU"], sub["r_s_au"], yerr=sub["r_s_err_au"],
             fmt="o-", markersize=4, capsize=2, label=f"{w}-bin window",
         )
-    ax.axhline(2646, color="k", linestyle="--", linewidth=0.8, label="Fiducial $R_s$")
-    ax.axhspan(2646 - 609, 2646 + 609, alpha=0.1, color="gray",
+    ax.axhline(2461, color="k", linestyle="--", linewidth=0.8, label="Fiducial $R_s$")
+    ax.axhspan(2461 - 638, 2461 + 638, alpha=0.1, color="gray",
                label="Total uncertainty")
     ax.set_xscale("log")
     ax.set_xlabel("Window start [AU]")
@@ -222,7 +222,7 @@ def normalization_sensitivity(df):
             sub["window_start_AU"], sub["alpha_sat"], yerr=sub["alpha_err"],
             fmt="o-", markersize=4, capsize=2, label=f"{w}-bin window",
         )
-    ax.axhline(0.366, color="k", linestyle="--", linewidth=0.8, label="Fiducial $\\alpha_{\\rm sat}$")
+    ax.axhline(0.380, color="k", linestyle="--", linewidth=0.8, label="Fiducial $\\alpha_{\\rm sat}$")
     ax.set_xscale("log")
     ax.set_xlabel("Window start [AU]")
     ax.set_ylabel("$\\alpha_{\\rm sat}$")
@@ -233,7 +233,7 @@ def normalization_sensitivity(df):
     fig.tight_layout()
     fig_dir = PROJECT_ROOT / "results" / "figures"
     fig_dir.mkdir(parents=True, exist_ok=True)
-    fig.savefig(fig_dir / "normalization_sensitivity.png", dpi=600)
+    fig.savefig(fig_dir / "010_normalization_sensitivity.png", dpi=600)
     plt.close(fig)
     print_status("Saved normalization_sensitivity.png", "SUCCESS")
 
@@ -531,7 +531,7 @@ def spatial_substructure(df):
     ax.grid(True, alpha=0.3)
 
     fig.tight_layout()
-    fig.savefig(PROJECT_ROOT / "results" / "figures" / "spatial_substructure.png", dpi=600)
+    fig.savefig(PROJECT_ROOT / "results" / "figures" / "010_spatial_substructure.png", dpi=600)
     plt.close(fig)
     print_status("Saved spatial_substructure.png", "SUCCESS")
 
@@ -783,7 +783,7 @@ def pittordis_triple_model(df, observed_profile):
     ax.set_ylim(0.95, 1.45)
     fig.tight_layout()
     fig.savefig(
-        PROJECT_ROOT / "results" / "figures" / "pittordis_triple_model.png", dpi=600
+        PROJECT_ROOT / "results" / "figures" / "010_pittordis_triple_model.png", dpi=600
     )
     plt.close(fig)
     print_status("Saved pittordis_triple_model.png", "SUCCESS")
@@ -823,25 +823,25 @@ def run_referee_hardening():
     # --- Analysis 1: Normalization Sensitivity ---
     sensitivity = normalization_sensitivity(df)
     if sensitivity is not None:
-        sensitivity.to_csv(outputs_dir / "normalization_sensitivity.csv", index=False)
+        sensitivity.to_csv(outputs_dir / "010_normalization_sensitivity.csv", index=False)
         print_status("Saved normalization_sensitivity.csv", "SUCCESS")
 
     # --- Analysis 2: Spatial Substructure ---
     substructure_result = spatial_substructure(df)
     if substructure_result is not None:
         spatial_df, quartile_df = substructure_result
-        spatial_df.to_csv(outputs_dir / "spatial_substructure.csv", index=False)
+        spatial_df.to_csv(outputs_dir / "010_spatial_substructure.csv", index=False)
         if len(quartile_df) > 0:
-            quartile_df.to_csv(outputs_dir / "distance_quartile_fits.csv", index=False)
+            quartile_df.to_csv(outputs_dir / "010_distance_quartile_fits.csv", index=False)
         print_status("Saved spatial_substructure.csv", "SUCCESS")
 
     # --- Analysis 3: Pittordis Triple Model ---
     pitt_profiles, pitt_summary = pittordis_triple_model(df, obs_profile)
     if pitt_profiles is not None:
-        pitt_profiles.to_csv(outputs_dir / "pittordis_triple_profiles.csv", index=False)
+        pitt_profiles.to_csv(outputs_dir / "010_pittordis_triple_profiles.csv", index=False)
         print_status("Saved pittordis_triple_profiles.csv", "SUCCESS")
     if pitt_summary is not None:
-        pitt_summary.to_csv(outputs_dir / "pittordis_triple_summary.csv", index=False)
+        pitt_summary.to_csv(outputs_dir / "010_pittordis_triple_summary.csv", index=False)
         print_status("Saved pittordis_triple_summary.csv", "SUCCESS")
 
     print_status("Referee-Hardening Diagnostics Complete", "TITLE")

@@ -146,9 +146,25 @@ class HTMLToMarkdownConverter {
             }
 
             console.log(`  Total HTML: ${(allHtml.length / 1024).toFixed(1)} KB`);
-            const markdownTitle = manifest.title || 'The Temporal Equivalence Principle: Density-Dependent Screening in Gaia DR3 Wide Binaries';
+            const markdownTitle = manifest.title || 'Temporal Equivalence Principle: Density-Dependent Screening in Gaia DR3 Wide Binaries';
             const markdown = `# ${markdownTitle}\n\n` + this.htmlToMarkdown(allHtml);
-            const outputPath = path.join(__dirname, '..', '15manuscript-tep-wb.md');
+            
+            // Extract version and codename for the filename
+            const versionRaw = manifest.version || 'v0.1 (Kilifi)';
+            // Matches "v0.2 (Kilifi)" or "0.2 (Kilifi)" or "v0.2"
+            const match = versionRaw.match(/^(v?[\d.]+)(?:\s*\(([^)]+)\))?$/);
+            
+            let versionPart = 'v0.1';
+            let codenamePart = 'Kilifi';
+            
+            if (match) {
+                versionPart = match[1].startsWith('v') ? match[1] : `v${match[1]}`;
+                codenamePart = match[2] || 'Kilifi';
+            }
+            
+            const markdownFilename = `13-TEP-WB-${versionPart}-${codenamePart}.md`;
+            const outputPath = path.join(__dirname, '..', markdownFilename);
+            
             fs.writeFileSync(outputPath, markdown, 'utf8');
             console.log(`✅ Markdown saved to: ${outputPath} (${(markdown.length / 1024).toFixed(1)} KB)`);
         } catch (error) {
