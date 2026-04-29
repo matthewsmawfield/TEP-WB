@@ -66,8 +66,9 @@ def estimate_metallicity_from_photometry(df, color_col='bp_rp1', mag_col='Mg1'):
     
     # Convert color residual to metallicity
     # Slope: 0.1 dex [Fe/H] ≈ 0.035 mag in Bp-Rp for M dwarfs (Covey et al. 2008)
-    # Therefore: [Fe/H] ≈ -ΔC / 0.35
-    feh_est = -delta_c / 0.35
+    # Bluer stars (delta_c < 0) are metal-poor (feh < 0)
+    # Therefore: [Fe/H] ≈ ΔC / 0.35
+    feh_est = delta_c / 0.35
     
     # Clip to reasonable range
     feh_est = feh_est.clip(-2.0, 0.5)
@@ -126,9 +127,12 @@ def add_metallicity_column(df, source_id_col='source_id1'):
     if feh_map and source_id_col in df.columns:
         df['feh'] = df[source_id_col].map(feh_map)
         n_spec = df['feh'].notna().sum()
+        df['feh_source'] = pd.Series(np.nan, index=df.index, dtype=object)
+        df.loc[df['feh'].notna(), 'feh_source'] = 'spectroscopic'
         print(f"  Spectroscopic matches: {n_spec} stars")
     else:
         df['feh'] = np.nan
+        df['feh_source'] = pd.Series(np.nan, index=df.index, dtype=object)
         n_spec = 0
     
     # Fill missing with photometric estimates
@@ -139,13 +143,15 @@ def add_metallicity_column(df, source_id_col='source_id1'):
         # Check if delta_c already exists from earlier step
         if 'delta_c' in df.columns:
             # Use existing delta_c
-            feh_photo = -df['delta_c'] / 0.35
+            feh_photo = df['delta_c'] / 0.35
             feh_photo = feh_photo.clip(-2.0, 0.5)
             df.loc[mask_missing, 'feh'] = feh_photo[mask_missing]
+            df.loc[mask_missing, 'feh_source'] = 'photometric_proxy'
         else:
             # Compute from scratch
             feh_photo = estimate_metallicity_from_photometry(df, 'bp_rp1', 'Mg1')
             df.loc[mask_missing, 'feh'] = feh_photo[mask_missing]
+            df.loc[mask_missing, 'feh_source'] = 'photometric_proxy'
         
         n_photo = df['feh'].notna().sum() - n_spec
         print(f"  Photometric estimates: {n_photo} stars")

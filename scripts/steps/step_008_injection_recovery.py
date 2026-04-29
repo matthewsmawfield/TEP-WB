@@ -7,8 +7,7 @@ signal injected into a realistic mock catalog, and that it does NOT falsely reco
 a signal when none is injected.
 
 This script:
-1. Constructs a mock catalog by shuffling real v_tilde values to destroy any true signal
-   while preserving the marginal distributions of separation, distance, mass, and errors.
+1. Constructs a Newtonian mock catalog from the step_012 forward-model profile.
 2. Injects a known TEP screening signal (with specified R_s and alpha_sat) into the
    shuffled catalog.
 3. Runs the standard profile-building and fitting pipeline on the injected catalog.
@@ -34,7 +33,6 @@ from scripts.utils.tep_model import (
     flat_newtonian_model,
     constant_boost_model,
     GLOBAL_BINS,
-    build_profile,
 )
 from scripts.steps.step_003_screening_test import (
     chi2_statistic,
@@ -45,8 +43,13 @@ N_REALIZATIONS = 100
 SEED = 271828
 
 
-def build_profile(frame, value_col="v_tilde_injected", bins=GLOBAL_BINS):
-    """Build a binned velocity profile from a dataframe."""
+def build_profile_injected(frame, value_col="v_tilde_injected", bins=GLOBAL_BINS):
+    """Build a binned velocity profile from a mock catalog with an injected signal.
+
+    Distinct from scripts.utils.tep_model.build_profile because the column name
+    here defaults to v_tilde_injected and the inner-baseline rule matches the
+    main step_003 fit (mean of first 5 bin medians).
+    """
     work = frame[["sep_AU", value_col]].dropna().copy()
     if len(work) == 0:
         return None, np.nan
@@ -136,33 +139,48 @@ def fit_profile(profile):
     }
 
 
-def inject_signal(df, r_s_inject, alpha_inject, rng):
-    """
-    Create a mock catalog by:
-    1. Shuffling v_tilde GLOBALLY across all separations to destroy any
-       separation-dependent structure (i.e., the real signal).
-    2. Normalizing the shuffled values so the global median is unity.
-    3. Multiplying by the TEP screening enhancement at each system's separation.
+def _load_newtonian_null_profile():
+    """Load the phase-mixed Newtonian null profile from step_012 outputs."""
+    summary_path = PROJECT_ROOT / "results" / "outputs" / "012_newtonian_forward_model_summary.csv"
+    profiles_path = PROJECT_ROOT / "results" / "outputs" / "012_newtonian_forward_model_profiles.csv"
+    if not summary_path.exists() or not profiles_path.exists():
+        return None
 
-    Global shuffling ensures that the per-bin medians are flat (~1.0) before
-    injection, so any recovered signal comes exclusively from the injected
-    parameters.  The trade-off is that the per-bin scatter is now the global
-    scatter rather than the local scatter, but because the pipeline uses
-    medians (robust to outliers) the recovery test remains valid.
+    summary = pd.read_csv(summary_path)
+    profiles = pd.read_csv(profiles_path)
+    if len(summary) == 0 or len(profiles) == 0:
+        return None
+
+    best_law = summary.sort_values("chi2_newtonian_profile_vs_observed").iloc[0]["eccentricity_law"]
+    prof = profiles[profiles["eccentricity_law"] == best_law].copy()
+    if len(prof) < 8:
+        return None
+    return prof[["sep_AU", "v_tilde_norm", "sem_norm"]].sort_values("sep_AU")
+
+
+def inject_signal(df, r_s_inject, alpha_inject, rng, null_profile):
+    """
+    Build a mock catalog from a projected Newtonian orbital null and inject
+    an optional TEP enhancement on top of that null.
     """
     work = df[["sep_AU", "v_tilde"]].dropna().copy()
+    if null_profile is None:
+        raise RuntimeError(
+            "Newtonian null profile missing. Run step_012_newtonian_forward_model.py first."
+        )
 
-    # Global shuffle: destroy all separation-dependent structure
-    shuffled = rng.permutation(work["v_tilde"].values).copy()
+    x_null = null_profile["sep_AU"].to_numpy()
+    y_null = null_profile["v_tilde_norm"].to_numpy()
+    e_null = null_profile["sem_norm"].to_numpy()
 
-    # Normalize so global median ≈ 1
-    global_median = np.median(shuffled)
-    if np.isfinite(global_median) and global_median > 0:
-        shuffled = shuffled / global_median
+    v_null = np.interp(work["sep_AU"].to_numpy(), x_null, y_null)
+    # Add modest bin-scale jitter to avoid a noiseless synthetic profile.
+    jitter = np.interp(work["sep_AU"].to_numpy(), x_null, np.maximum(e_null, 1e-3))
+    v_null_noisy = np.clip(v_null + rng.normal(0.0, jitter), 0.05, None)
 
     # Inject the TEP signal
     enhancement = 1.0 + alpha_inject * (1.0 - np.exp(-work["sep_AU"].values / r_s_inject))
-    work["v_tilde_injected"] = shuffled * enhancement
+    work["v_tilde_injected"] = v_null_noisy * enhancement
 
     return work
 
@@ -180,6 +198,14 @@ def run_injection_recovery():
     print_status(f"Loaded {len(df):,} systems after RUWE cut", "INFO")
 
     rng = np.random.default_rng(SEED)
+    null_profile = _load_newtonian_null_profile()
+    if null_profile is None:
+        print_status(
+            "Newtonian null profile not found. Please run step_012_newtonian_forward_model.py first.",
+            "ERROR",
+        )
+        sys.exit(1)
+    print_status("Loaded Newtonian null profile from step_012 outputs", "INFO")
 
     # =========================================================================
     # TEST 1: Recover known TEP signal at the observed parameters
@@ -195,8 +221,8 @@ def run_injection_recovery():
         print_status(f"Loaded fitted parameters: R_s = {true_r_s:.1f} AU, alpha = {true_alpha:.4f}", "INFO")
     else:
         # Fallback values if screening analysis hasn't been run yet
-        true_r_s = 2461.0
-        true_alpha = 0.380
+        true_r_s = 2646.0
+        true_alpha = 0.366
         print_status(f"Using default parameters: R_s = {true_r_s:.1f} AU, alpha = {true_alpha:.4f}", "WARNING")
 
     recovered_rs = []
@@ -204,8 +230,8 @@ def run_injection_recovery():
     recovered_dchi2 = []
 
     for i in range(N_REALIZATIONS):
-        mock = inject_signal(df, true_r_s, true_alpha, rng)
-        profile, _ = build_profile(mock)
+        mock = inject_signal(df, true_r_s, true_alpha, rng, null_profile)
+        profile, _ = build_profile_injected(mock)
         fit = fit_profile(profile)
         if fit.get("fit_success"):
             recovered_rs.append(fit["r_s_au"])
@@ -223,7 +249,7 @@ def run_injection_recovery():
     alpha_bias = float(alpha_median - true_alpha)
     alpha_scatter = float(np.std(recovered_alpha))
     dchi2_median = float(np.median(recovered_dchi2))
-    recovery_rate = float(np.mean(recovered_dchi2 > 10))
+    recovery_rate = float(np.mean((recovered_dchi2 > 10) & (recovered_alpha > 0.05)))
 
     print_status(
         f"R_s recovery: median = {rs_median:.0f} AU (true = {true_r_s:.0f}), "
@@ -236,7 +262,7 @@ def run_injection_recovery():
         "RESULT",
     )
     print_status(
-        f"Detection rate (Δχ² > 10 vs const boost): {recovery_rate:.0%} of {len(recovered_rs)} realizations",
+        f"Detection rate (Δχ² > 10 and alpha > 0.05): {recovery_rate:.0%} of {len(recovered_rs)} realizations",
         "RESULT",
     )
 
@@ -250,8 +276,8 @@ def run_injection_recovery():
     null_dchi2 = []
 
     for i in range(N_REALIZATIONS):
-        mock = inject_signal(df, 2461.0, 0.0, rng)
-        profile, _ = build_profile(mock)
+        mock = inject_signal(df, true_r_s, 0.0, rng, null_profile)
+        profile, _ = build_profile_injected(mock)
         fit = fit_profile(profile)
         if fit.get("fit_success"):
             null_rs.append(fit["r_s_au"])
@@ -260,7 +286,9 @@ def run_injection_recovery():
 
     null_alpha = np.array(null_alpha)
     null_dchi2 = np.array(null_dchi2)
-    false_positive_rate = float(np.mean(null_dchi2 > 10))
+    # For a structured Newtonian null, require both shape preference and
+    # non-trivial recovered amplitude to count as a false positive.
+    false_positive_rate = float(np.mean((null_dchi2 > 10) & (null_alpha > 0.05)))
     null_alpha_median = float(np.median(null_alpha))
 
     print_status(
@@ -268,7 +296,7 @@ def run_injection_recovery():
         "RESULT",
     )
     print_status(
-        f"False positive rate (Δχ² > 10 vs const boost): {false_positive_rate:.0%} of {len(null_dchi2)} realizations",
+        f"False positive rate (Δχ² > 10 and alpha > 0.05): {false_positive_rate:.0%} of {len(null_dchi2)} realizations",
         "RESULT",
     )
 
@@ -277,7 +305,7 @@ def run_injection_recovery():
     # =========================================================================
     print_status("Test 3: Recovery fidelity across injected R_s values", "PROCESS")
 
-    sweep_rs_values = [1000, 2000, 2461, 3500, 5000, 8000]
+    sweep_rs_values = [1000, 2000, 2646, 3500, 5000, 8000]
     sweep_results = []
 
     for inject_rs in sweep_rs_values:
@@ -286,8 +314,8 @@ def run_injection_recovery():
         sweep_dchi2_recovered = []
 
         for i in range(N_REALIZATIONS):
-            mock = inject_signal(df, inject_rs, true_alpha, rng)
-            profile, _ = build_profile(mock)
+            mock = inject_signal(df, inject_rs, true_alpha, rng, null_profile)
+            profile, _ = build_profile_injected(mock)
             fit = fit_profile(profile)
             if fit.get("fit_success"):
                 sweep_recovered.append(fit["r_s_au"])
@@ -445,9 +473,10 @@ def run_injection_recovery():
         sems_arr = np.array(sems_arr)
         ctrs = np.array(ctrs)
 
-        # Normalize to inner baseline
-        inner = ctrs < 500
-        baseline_ecc = float(np.mean(meds[inner])) if inner.sum() > 0 else float(meds[0])
+        # Normalize to inner baseline using the canonical step_003 convention:
+        # mean of the first 5 valid bin medians.
+        n_base = min(5, len(meds))
+        baseline_ecc = float(np.mean(meds[:n_base])) if n_base > 0 else float(meds[0])
         v_norm_ecc = meds / baseline_ecc
         sem_norm_ecc = sems_arr / baseline_ecc
 
@@ -457,7 +486,7 @@ def run_injection_recovery():
                 ctrs,
                 v_norm_ecc,
                 sigma=sem_norm_ecc,
-                p0=[2461.0, 0.3],
+                p0=[2646.0, 0.3],
                 bounds=([100, 0], [50000, 0.8]),
                 maxfev=10000,
             )
@@ -533,7 +562,7 @@ def run_injection_recovery():
             },
             {
                 "test": "null_injection",
-                "injected_r_s": 2461.0,
+                "injected_r_s": 2646.0,
                 "injected_alpha": 0.0,
                 "n_realizations": N_REALIZATIONS,
                 "n_successful": len(null_dchi2),

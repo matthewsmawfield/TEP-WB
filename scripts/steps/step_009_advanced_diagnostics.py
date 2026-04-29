@@ -30,6 +30,14 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from scripts.utils.logger import TEPLogger, set_step_logger, print_status
+from scripts.utils.tep_model import (
+    GLOBAL_BINS,
+    GLOBAL_ALPHA,
+    INJECTION_SEED as SEED,
+    MLR_EXPONENT,
+    G_AU,
+    tep_screening_model_fixed_alpha,
+)
 from scripts.steps.step_003_screening_test import (
     tep_screening_model,
     flat_newtonian_model,
@@ -51,12 +59,6 @@ plt.rcParams.update({
     'savefig.bbox': 'tight',
 })
 
-GLOBAL_BINS = np.logspace(np.log10(50), np.log10(30000), 20)
-GLOBAL_ALPHA = 0.4
-SEED = 271828
-MLR_EXPONENT = 3.5  # Main-sequence mass-luminosity exponent L ∝ M^β
-
-
 # =============================================================================
 # SHARED UTILITIES
 # =============================================================================
@@ -72,10 +74,6 @@ def galactic_baryonic_density(Z_kpc):
     return (rho_thin * np.exp(-Z / h_thin) +
             rho_thick * np.exp(-Z / h_thick) +
             rho_gas * np.exp(-Z / h_gas))
-
-
-def tep_screening_model_fixed_alpha(s, r_s):
-    return 1.0 + GLOBAL_ALPHA * (1.0 - np.exp(-s / r_s))
 
 
 def build_profile(frame, value_col="v_tilde", bins=GLOBAL_BINS):
@@ -172,7 +170,6 @@ def triple_forward_model(df, observed_profile):
     # Triple boost physics
     M_A_median = float(df["mass1_corr"].median())
     M_B_median = float(df["mass2_corr"].median())
-    G_AU = 887.1  # G in AU³ M_sun⁻¹ yr⁻²
 
     def compute_triple_boosts(q_arr, a_arr, s_outer):
         """Vectorized triple boost computation for arrays of q and a_inner."""
@@ -318,11 +315,12 @@ def self_screening_model(df):
 
     The three data points come from the demographic half-sample analysis:
     - Low primary mass: α_sat = 0.509, median M ≈ 0.54 M_sun
-    - Full sample: α_sat = 0.380, median M ≈ 0.72 M_sun
+    - Full sample: α_sat = 0.366, median M ≈ 0.72 M_sun
     - High primary mass: α_sat = 0.237, median M ≈ 0.90 M_sun
 
-    If the inferred bare coupling α₀ matches the pulsar-derived scale
-    (α_eff ~ 10⁶), this constitutes a cross-scale consistency check.
+    The fitted velocity-amplitude normalization α_sat,0 characterizes the
+    low-mass limit of the self-screening model; this is a profile parameter, not
+    a microscopic coupling, and should not be compared to the pulsar-derived κ_MSP.
     """
     print_status("Analysis 2: Quantitative Self-Screening Model", "TITLE")
 
@@ -341,13 +339,23 @@ def self_screening_model(df):
         print_status("Missing demographic subset data; skipping", "WARNING")
         return None
 
+    # Full-sample alpha_sat from step_003 fit summary (avoid stale hardcoded value)
+    fit_summary_path = PROJECT_ROOT / "results" / "outputs" / "003_screening_fit_summary.csv"
+    if fit_summary_path.exists():
+        fs = pd.read_csv(fit_summary_path)
+        full_alpha = float(fs["alpha"].iloc[0])
+        full_alpha_err = float(fs["alpha_err_stat"].iloc[0])
+    else:
+        print_status("003_screening_fit_summary.csv not found; using fallback full-sample alpha", "WARNING")
+        full_alpha, full_alpha_err = 0.366, 0.012  # current best-fit fallback
+
     # Data points: (median primary mass, α_sat, α_err)
     data_points = [
         (float(low_mass["median_primary_mass"].iloc[0]),
          float(low_mass["alpha"].iloc[0]),
          float(low_mass["alpha_err"].iloc[0])),
         (float(df[["mass1_corr", "mass2_corr"]].max(axis=1).median()),
-         0.380, 0.012),  # Full sample from step_003
+         full_alpha, full_alpha_err),  # Full sample loaded from step_003
         (float(high_mass["median_primary_mass"].iloc[0]),
          float(high_mass["alpha"].iloc[0]),
          float(high_mass["alpha_err"].iloc[0])),
@@ -430,29 +438,17 @@ def self_screening_model(df):
         dof_pow = 1
         pow_fit_success = False
 
-    # Compare inferred α₀ to pulsar-derived reference (Paper 10/TEP-COS)
-    # 0.58 dex spin-down excess corresponds to α_eff ~ 10^6
-    alpha0_ref = 0.58  # dex value from pulsar spin-down
-    alpha0_ref_err = 0.16
-    alpha0_ref_scale = 1e6  # effective coupling scale
-
-    if exp_fit_success:
-        # Compare to pulsar reference scale (~10^6, not direct α₀)
-        tension_exp = abs(alpha0_exp - alpha0_ref) / np.sqrt(
-            alpha0_exp_err ** 2 + alpha0_ref_err ** 2
-        )
-        print_status(
-            f"Pulsar comparison (exponential): α₀ = {alpha0_exp:.3f} ± {alpha0_exp_err:.3f} "
-            f"vs pulsar reference {alpha0_ref} ± {alpha0_ref_err} dex → {tension_exp:.1f}σ tension",
-            "RESULT",
-        )
+    # Note: As detailed in the Kilifi manuscript (Section 8.1), alpha_sat is a velocity-profile
+    # amplitude and should NOT be compared directly to the microscopic pulsar coupling (0.58 dex)
+    # or the macroscopic response coefficients (kappa_gal).
+    # The exponential self-screening model is solely to demonstrate continuous mass-dependent screening.
 
     # Extrapolate to M → 0 limit for the power-law (diverges, so use M = 0.3 M_sun as floor)
     if pow_fit_success:
         alpha_at_03 = power_model(0.3, *popt_pow)
         print_status(
             f"Power-law extrapolation at M = 0.3 M☉: α_sat = {alpha_at_03:.3f} "
-            f"(bare coupling limit for lowest-mass binaries)",
+            f"(velocity-amplitude extrapolation to low mass)",
             "RESULT",
         )
 
@@ -470,12 +466,7 @@ def self_screening_model(df):
         "pow_index_err": p_pow_err,
         "pow_chi2": chi2_pow,
         "pow_dof": dof_pow,
-        "pulsar_alpha0": alpha0_ref,
-        "pulsar_alpha0_err": alpha0_ref_err,
-        "pulsar_alpha_eff_scale": alpha0_ref_scale,
     }
-    if exp_fit_success:
-        summary["tension_with_cepheid_sigma"] = tension_exp
 
     # Generate figure
     fig, ax = plt.subplots(figsize=(6, 4.5))
@@ -484,13 +475,10 @@ def self_screening_model(df):
     M_grid = np.linspace(0.3, 1.2, 100)
     if exp_fit_success:
         ax.plot(M_grid, exp_model(M_grid, *popt_exp), "b-", linewidth=1.5,
-                label=f"Exponential: $\\alpha_0 = {alpha0_exp:.2f} \\pm {alpha0_exp_err:.2f}$")
+                label=f"Exponential: $\\alpha_{{\\rm sat,0}} = {alpha0_exp:.2f} \\pm {alpha0_exp_err:.2f}$")
     if pow_fit_success:
         ax.plot(M_grid, power_model(M_grid, *popt_pow), "r--", linewidth=1.5,
                 label=f"Power law: $p = {p_pow:.2f}$")
-    # Pulsar-derived reference band (Paper 10/TEP-COS)
-    ax.axhspan(alpha0_ref - alpha0_ref_err, alpha0_ref + alpha0_ref_err,
-               alpha=0.15, color="green", label=f"Pulsar $\\alpha_{{\\rm eff}} \\sim 10^6$ ({alpha0_ref} dex)")
     ax.set_xlabel("Primary mass [$M_\\odot$]")
     ax.set_ylabel("$\\alpha_{\\rm sat}$")
     ax.set_title("Mass-Dependent Self-Screening")
@@ -547,7 +535,12 @@ def fine_z_stratification(df):
         median_z = float(abs_Z[mask].median())
         rho_bary = galactic_baryonic_density(median_z)
 
-        # Build profile for this |Z| slice
+        # Build profile for this |Z| slice. Use median of raw v_tilde in
+        # sep < 500 AU within this Z-bin (step_005-style) rather than
+        # mean-of-first-5-bin-medians (step_003-style) because each of the 5
+        # |Z| quintiles has only ~68k systems split across many sep bins, so
+        # bin-median averaging over the inner range is noisy. The two
+        # conventions agree to ≲ 1% in well-populated regimes.
         inner = sub[sub["sep_AU"] < 500]["v_tilde"]
         base = float(inner.median()) if len(inner) > 10 else np.nan
         if not np.isfinite(base) or base <= 0:
@@ -715,7 +708,7 @@ def fine_z_stratification(df):
         rho_grid = np.array([galactic_baryonic_density(z) for z in Z_grid])
         rs_pred = np.exp(chameleon_log(np.log(rho_grid), *popt_cham))
         ax1.plot(Z_grid * 1000, rs_pred, "b-", linewidth=1.5,
-                 label=f"Chameleon fit: $n = {n_inferred:.1f} \\pm {n_err:.1f}$")
+                 label=f"Scaling fit: $n = {n_inferred:.1f} \\pm {n_err:.1f}$")
     ax1.set_xlabel("$|Z|$ [pc]")
     ax1.set_ylabel("$R_s$ [AU]")
     ax1.set_title("Screening Radius vs Galactic Height (5 bins)")
@@ -738,7 +731,7 @@ def fine_z_stratification(df):
         ax2.set_yscale("log")
         ax2.set_xlabel("$\\rho_{\\rm bary}$ [$M_\\odot\\,{\\rm pc}^{-3}$]")
         ax2.set_ylabel("$R_s$ [AU]")
-        ax2.set_title("Chameleon Scaling: $R_s$ vs Baryonic Density")
+        ax2.set_title("Environmental Scaling: $R_s$ vs Baryonic Density")
         ax2.legend(fontsize=7)
         ax2.grid(True, alpha=0.3, which="both")
 

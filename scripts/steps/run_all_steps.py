@@ -43,10 +43,12 @@ def main():
         "step_005_environment_test.py",
         "step_006_audit_analysis.py",
         "step_007_supplemental_controls.py",
-        "step_008_injection_recovery.py",
         "step_009_advanced_diagnostics.py",
         "step_010_referee_hardening.py",
-        "step_011_mond_comparison.py"
+        "step_011_mond_comparison.py",
+        "step_012_newtonian_forward_model.py",
+        "step_008_injection_recovery.py",
+        "step_013_claim_consistency_audit.py"
     ]
     
     for step in steps:

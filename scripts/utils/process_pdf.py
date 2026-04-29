@@ -2,7 +2,7 @@
 """Unified PDF Processing Script
 Compresses PDF and embeds comprehensive metadata in one operation.
 
-This script processes the TEP-WB manuscript PDF (Paper 13: "The Temporal Equivalence Principle: Density-Dependent Screening in Gaia DR3 Wide Binaries") by compressing it 
+This script processes the TEP-WB manuscript PDF (Paper 13: "The Temporal Equivalence Principle: Temporal Shear Recovery in Gaia DR3 Wide Binaries") by compressing it 
 for web distribution and embedding complete academic metadata for proper indexing and citation.
 
 Usage:
@@ -151,13 +151,13 @@ def main():
     # Paper metadata - must match manuscript, CITATION.cff, and zenodo.txt
     metadata = {
         # Core identification
-        'Title': 'The Temporal Equivalence Principle: Density-Dependent Screening in Gaia DR3 Wide Binaries',
+        'Title': 'The Temporal Equivalence Principle: Temporal Shear Recovery in Gaia DR3 Wide Binaries',
         'Author': 'Matthew Lukin Smawfield',
         'Creator': 'Matthew Lukin Smawfield',
         
         # Scientific abstract with key results
         'Subject': (
-            'The Gaia DR3 catalog of over one million wide binaries opens a precise window onto gravity in the weak-field regime (a ≲ 10^-10 m/s^2), yet whether the observed velocity excess reflects modified gravity or unresolved systematics remains contested. This paper shows that the Temporal Equivalence Principle (TEP), in which a conformal scalar field modulates matter proper time as dτ/dt ≈ A(φ)^{1/2}, addresses that tension through density-dependent screening. From 341,315 high-purity systems, the analysis identifies a screening transition at R_s = 2,646 ± 182 AU (statistical; ±609 AU total), strongly preferred over both a flat Newtonian profile (Δχ² = 14,845) and a constant boost (Δχ² = 3,583). At large separation the profile saturates at α_sat = 0.366 ± 0.012, roughly 35-40% above the Keplerian baseline. The signal also shows the environmental ordering required by TEP. After metallicity-dependent mass corrections and bootstrap uncertainty estimation, the lower-density high-|Z| population transitions at smaller radius than the higher-density midplane (R_s = 4,673 ± 194 versus 7,159 ± 1,573 AU), confirmed by a solar-track control (R_s = 4,099 ± 239 versus 6,885 ± 984 AU; permutation p < 10^-4 for the full sample and p < 10^-3 for the solar track). Scrambling tests fail to reproduce the observed screening preference (p < 10^-4). The wide-binary anomaly is therefore not a generic low-acceleration excess but a structured, environmentally modulated screening transition whose morphology, onset scale, and density dependence are quantitatively consistent with the conformal scalar field of TEP and are not reproduced by MOND with or without the External Field Effect.',
+            'The Gaia DR3 catalog of over one million wide binaries opens a precise window onto gravity in the weak-field regime (a ≲ 10^-10 m/s^2), yet whether the observed velocity excess reflects modified gravity or unresolved systematics remains contested. This paper shows that the Temporal Equivalence Principle (TEP), in which a conformal scalar field modulates matter proper time as dτ/dt ≈ A(φ)^{1/2}, addresses that tension through density-dependent screening. From 341,315 high-purity systems, the analysis identifies a screening transition at R_s = 2,646 ± 182 AU (statistical; ±609 AU total), strongly preferred over both a flat Newtonian profile (Δχ² = 14,845) and a constant boost (Δχ² = 3,583). At large separation the profile saturates at α_sat = 0.366 ± 0.012, roughly 35-40% above the Keplerian baseline. The signal also shows the environmental ordering required by TEP. After metallicity-dependent mass corrections and bootstrap uncertainty estimation, the lower-density high-|Z| population transitions at smaller radius than the higher-density midplane (R_s = 4,662 ± 196 versus 7,131 ± 1,341 AU), confirmed by a solar-track control (R_s = 4,145 ± 276 versus 6,856 ± 920 AU; permutation p < 10^-4 for the full sample and p < 10^-3 for the solar track). Scrambling tests fail to reproduce the observed screening preference (p < 10^-4). The wide-binary anomaly is therefore not a generic low-acceleration excess but a structured, environmentally modulated screening transition whose morphology, onset scale, and density dependence are quantitatively consistent with the conformal scalar field of TEP and are not reproduced by MOND with or without the External Field Effect.',
         ),
         
         # Keywords for indexing
@@ -179,24 +179,24 @@ def main():
         ),
         
         # Production metadata
-        'Producer': 'TEP-WB Research Project (Paper 13) - Version 0.2 (Kilifi)',
+        'Producer': 'TEP-WB Research Project (Paper 13) - Version 0.3 (Kilifi)',
         
         # Rights and identifiers
         'Copyright': 'Creative Commons Attribution 4.0 International License (CC BY 4.0)',
         
         # Dates
-        'CreationDate': '2026:03:19 00:00:00',
-        'ModifyDate': '2026:03:19 00:00:00',
+        'CreationDate': '2026:04:27 00:00:00',
+        'ModifyDate': '2026:04:27 00:00:00',
         
         # XMP Dublin Core metadata (exiftool uses these prefixes)
         'XMP-dc:Creator': 'Matthew Lukin Smawfield',
-        'XMP-dc:Title': 'The Temporal Equivalence Principle: Density-Dependent Screening in Gaia DR3 Wide Binaries',
+        'XMP-dc:Title': 'The Temporal Equivalence Principle: Temporal Shear Recovery in Gaia DR3 Wide Binaries',
         'XMP-dc:Description': 'TEP resolution to Gaia DR3 wide-binary controversy via density-dependent temporal screening',
         'XMP-dc:Rights': 'CC BY 4.0',
         'XMP-dc:Identifier': f'doi:{args.doi}',
         'XMP-dc:Source': 'https://matthewsmawfield.github.io/TEP-WB/',
         'XMP-dc:Publisher': 'Zenodo',
-        'XMP-dc:Date': '2026-03-19',
+        'XMP-dc:Date': '2026-04-27',
         'XMP-dc:Type': 'Preprint',
         'XMP-dc:Format': 'application/pdf',
         'XMP-dc:Language': 'en',

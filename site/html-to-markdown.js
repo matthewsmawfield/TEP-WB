@@ -146,8 +146,26 @@ class HTMLToMarkdownConverter {
             }
 
             console.log(`  Total HTML: ${(allHtml.length / 1024).toFixed(1)} KB`);
-            const markdownTitle = manifest.title || 'Temporal Equivalence Principle: Density-Dependent Screening in Gaia DR3 Wide Binaries';
-            const markdown = `# ${markdownTitle}\n\n` + this.htmlToMarkdown(allHtml);
+            
+            // Build header with metadata matching manuscript template format
+            const title = manifest.title || 'Temporal Equivalence Principle: Temporal Shear Recovery in Gaia DR3 Wide Binaries';
+            const author = manifest.author || 'Matthew Lukin Smawfield';
+            const version = manifest.version || 'v0.1';
+            const firstPublished = manifest.first_published || '19 March 2026';
+            const lastUpdated = manifest.date || '29 April 2026';
+            const doi = manifest.doi || '10.5281/zenodo.19102061';
+            
+            const header = `# ${title}
+**${author}**
+Version: ${version}
+First published: ${firstPublished} · Last updated: ${lastUpdated}
+DOI: ${doi}
+
+---
+
+`;
+            
+            const markdown = header + this.htmlToMarkdown(allHtml);
             
             // Extract version and codename for the filename
             const versionRaw = manifest.version || 'v0.1 (Kilifi)';

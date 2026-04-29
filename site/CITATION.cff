@@ -4,10 +4,10 @@ authors:
 - family-names: "Smawfield"
   given-names: "Matthew Lukin"
   orcid: "https://orcid.org/0009-0003-8219-3159"
-title: "Temporal Equivalence Principle: Density-Dependent Screening in Gaia DR3 Wide Binaries"
-version: "v0.2 (Kilifi)"
+title: "Temporal Equivalence Principle: Temporal Shear Recovery in Gaia DR3 Wide Binaries"
+version: "v0.3 (Kilifi)"
 date-released: 2026-03-19
-doi: 10.5281/zenodo.19102062
+doi: 10.5281/zenodo.19102061
 repository-code: "https://github.com/matthewsmawfield/TEP-WB"
 license: CC-BY-4.0
 keywords:
@@ -47,3 +47,6 @@ keywords:
   - observational cosmology
   - astrophysics
   - observational astrophysics
+preferred-citation:
+  type: article
+  title: "Temporal Equivalence Principle: Temporal Shear Recovery in Gaia DR3 Wide Binaries (Kilifi v0.3)"

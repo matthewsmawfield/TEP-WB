@@ -35,6 +35,12 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from scripts.utils.logger import TEPLogger, set_step_logger, print_status
+from scripts.utils.tep_model import (
+    GLOBAL_BINS,
+    INJECTION_SEED as SEED,
+    MLR_EXPONENT,
+    G_AU,
+)
 from scripts.steps.step_003_screening_test import (
     tep_screening_model,
     chi2_statistic,
@@ -54,10 +60,6 @@ plt.rcParams.update({
     'savefig.bbox': 'tight',
 })
 
-GLOBAL_BINS = np.logspace(np.log10(50), np.log10(30000), 20)
-SEED = 271828
-MLR_EXPONENT = 3.5
-G_AU = 887.1  # G in AU^3 M_sun^-1 yr^-2
 
 
 # =============================================================================
@@ -204,9 +206,17 @@ def normalization_sensitivity(df):
             sub["window_start_AU"], sub["r_s_au"], yerr=sub["r_s_err_au"],
             fmt="o-", markersize=4, capsize=2, label=f"{w}-bin window",
         )
-    ax.axhline(2461, color="k", linestyle="--", linewidth=0.8, label="Fiducial $R_s$")
-    ax.axhspan(2461 - 638, 2461 + 638, alpha=0.1, color="gray",
-               label="Total uncertainty")
+    # Use the dynamically computed fiducial R_s and total uncertainty from screening fit
+    fit_summary_path = PROJECT_ROOT / "results" / "outputs" / "003_screening_fit_summary.csv"
+    if fit_summary_path.exists():
+        _fs = pd.read_csv(fit_summary_path)
+        _r_s_fid_plot = float(_fs["r_s_au"].iloc[0])
+        _r_s_err_total = float(_fs["r_s_err_total_au"].iloc[0])
+    else:
+        _r_s_fid_plot, _r_s_err_total = 2646.0, 609.0  # current best-fit fallback
+    ax.axhline(_r_s_fid_plot, color="k", linestyle="--", linewidth=0.8, label="Fiducial $R_s$")
+    ax.axhspan(_r_s_fid_plot - _r_s_err_total, _r_s_fid_plot + _r_s_err_total,
+               alpha=0.1, color="gray", label="Total uncertainty")
     ax.set_xscale("log")
     ax.set_xlabel("Window start [AU]")
     ax.set_ylabel("$R_s$ [AU]")
@@ -222,7 +232,13 @@ def normalization_sensitivity(df):
             sub["window_start_AU"], sub["alpha_sat"], yerr=sub["alpha_err"],
             fmt="o-", markersize=4, capsize=2, label=f"{w}-bin window",
         )
-    ax.axhline(0.380, color="k", linestyle="--", linewidth=0.8, label="Fiducial $\\alpha_{\\rm sat}$")
+    # Read fiducial alpha_sat dynamically from step_003 fit summary
+    if fit_summary_path.exists():
+        _alpha_fid = float(_fs["alpha"].iloc[0])
+    else:
+        _alpha_fid = 0.366  # current best-fit fallback
+    ax.axhline(_alpha_fid, color="k", linestyle="--", linewidth=0.8,
+               label=f"Fiducial $\\alpha_{{\\rm sat}} = {_alpha_fid:.3f}$")
     ax.set_xscale("log")
     ax.set_xlabel("Window start [AU]")
     ax.set_ylabel("$\\alpha_{\\rm sat}$")
@@ -523,8 +539,15 @@ def spatial_substructure(df):
         )
         ax.set_xticks(range(len(quartile_df)))
         ax.set_xticklabels(quartile_df["quartile"], fontsize=7)
-        ax.axhline(0.49, color="red", linestyle="--", linewidth=0.8,
-                    label="Full-sample $\\rho_1 = 0.49$")
+        # Read full-sample lag-1 autocorrelation from step_003 summary
+        _fit_path = PROJECT_ROOT / "results" / "outputs" / "003_screening_fit_summary.csv"
+        if _fit_path.exists():
+            _fs_rho = pd.read_csv(_fit_path)
+            _rho1_fid = float(_fs_rho["acf_lag1"].iloc[0])
+        else:
+            _rho1_fid = 0.491
+        ax.axhline(_rho1_fid, color="red", linestyle="--", linewidth=0.8,
+                    label=f"Full-sample $\\rho_1 = {_rho1_fid:.2f}$")
         ax.set_ylabel("Lag-1 autocorrelation $\\rho_1$")
         ax.set_title("Residual Autocorrelation by Distance Quartile")
         ax.legend(fontsize=7)

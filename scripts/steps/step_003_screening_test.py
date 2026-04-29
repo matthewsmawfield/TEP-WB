@@ -27,10 +27,16 @@ from scipy.optimize import curve_fit
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 from scripts.utils.logger import TEPLogger, print_status, set_step_logger
-from scripts.utils.tep_model import GLOBAL_BINS
+from scripts.utils.tep_model import (
+    GLOBAL_BINS,
+    BOOTSTRAP_SEED,
+    tep_screening_model,
+    flat_newtonian_model,
+    constant_boost_model,
+    chi2_statistic,
+)
 
 # Analysis Constants
-BOOTSTRAP_SEED = 314159
 BOOTSTRAP_ITERATIONS = 1000
 
 # Set publication-quality matplotlib defaults
@@ -51,30 +57,6 @@ plt.rcParams.update(
 )
 
 
-def tep_screening_model(s, r_s, alpha):
-    """
-    Canonical TEP exponential screening model (Temporal Topology).
-
-    In the TEP v0.7 framework, screening operates via the continuous spatial
-    profile of the chameleon field (Temporal Topology), with the local field
-    gradient (Temporal Shear, ∇φ) vanishing smoothly in dense environments.
-    This predicts a pure exponential approach to saturation, without the
-    geometric R_s/s prefactor that arises from discrete thin-shell matching.
-
-    v_tilde = 1 + alpha * (1 - exp(-s/r_s))
-
-    Parameters
-    ----------
-    s : float or array
-        Projected separation (AU)
-    r_s : float
-        Screening radius (AU) — characteristic scale of the Temporal Topology transition
-    alpha : float
-        Saturation amplitude — set by the asymptotic Temporal Shear
-    """
-    return 1.0 + alpha * (1.0 - np.exp(-s / r_s))
-
-
 def sigmoid_model(s, s_trans, width, alpha):
     """
     Sigmoid (logistic) transition model.
@@ -89,19 +71,6 @@ def double_exp_model(s, r_s, alpha, beta):
     v_tilde = 1 + alpha * (1 - exp(-(s/r_s)^beta))
     """
     return 1.0 + alpha * (1.0 - np.exp(-((s / r_s) ** beta)))
-
-
-def flat_newtonian_model(s):
-    return np.ones_like(np.asarray(s), dtype=float)
-
-
-def constant_boost_model(s, alpha):
-    return np.ones_like(np.asarray(s), dtype=float) * (1.0 + alpha)
-
-
-def chi2_statistic(observed, expected, errors):
-    """Calculate chi-squared statistic."""
-    return float(np.sum(((observed - expected) / errors) ** 2))
 
 
 def information_criteria(chi2, n_points, n_params):

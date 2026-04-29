@@ -1,5 +1,5 @@
 {
-  "title": "Temporal Equivalence Principle: Density-Dependent Screening in Gaia DR3 Wide Binaries",
+  "title": "Temporal Equivalence Principle: Temporal Shear Recovery in Gaia DR3 Wide Binaries",
   "authors": [
     {
       "given": "Matthew Lukin",
@@ -7,9 +7,10 @@
       "orcid": "https://orcid.org/0009-0003-8219-3159"
     }
   ],
-  "date": "2026-04-24",
-  "doi": "10.5281/zenodo.19102062",
-  "version": "v0.2 (Kilifi)",
+  "date": "2026-03-19",
+  "doi": "10.5281/zenodo.19102061",
+  "version": "0.3",
+  "note": "Preprint, Version 0.3 (Kilifi)",
   "keywords": [
     "Gravitation",
     "Astrometry",

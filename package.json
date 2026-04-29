@@ -1,7 +1,7 @@
 {
   "name": "tep-wb",
   "version": "0.1.0",
-  "description": "TEP-WB: Density-Dependent Screening in Gaia DR3 Wide Binaries",
+  "description": "TEP-WB: Temporal Shear Recovery in Gaia DR3 Wide Binaries",
   "keywords": [
     "wide binaries", "Gaia DR3", "modified gravity", "MOND", "temporal equivalence principle",
     "gravitational screening", "beyond standard model", "extended gravity", "gravitational anomalies",

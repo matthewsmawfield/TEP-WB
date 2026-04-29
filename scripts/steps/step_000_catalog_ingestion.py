@@ -137,11 +137,13 @@ def ingest_catalog():
             # This is critical for testing the chameleon screening hypothesis in step_005.
             # We must know how deep the binary sits within the Galactic dark matter halo.
             R_sun = 8.2  # kpc
-            z_sun = 0.025  # kpc
-            
+            z_sun = 0.025  # kpc — Sun sits ABOVE the Galactic midplane
+
             x_gc = R_sun - gal_coords.cartesian.x.to(u.kpc).value
-            y_gc = -gal_coords.cartesian.y.to(u.kpc).value  
-            z_gc = gal_coords.cartesian.z.to(u.kpc).value - z_sun
+            y_gc = -gal_coords.cartesian.y.to(u.kpc).value
+            # Star's height above the midplane = z in Sun-centred Galactic frame + z_sun
+            # (the Galactic midplane lies BELOW the Sun by z_sun)
+            z_gc = gal_coords.cartesian.z.to(u.kpc).value + z_sun
             
             df['R_galactocentric_kpc'] = np.sqrt(x_gc**2 + y_gc**2)
             df['z_galactic_kpc'] = z_gc

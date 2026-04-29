@@ -1,13 +1,13 @@
 {
   "name": "tep-wb-site",
-  "version": "0.1.0",
-  "description": "Temporal Equivalence Principle: Density-Dependent Screening in Gaia DR3 Wide Binaries",
+  "version": "0.3.0",
+  "description": "Temporal Equivalence Principle: Temporal Shear Recovery in Gaia DR3 Wide Binaries",
   "main": "index.html",
   "scripts": {
     "dev": "node dev-server.js",
     "start": "python3 -m http.server 8000",
     "build": "node build.js",
-    "build:markdown": "npm run build",
+    "build:markdown": "npm run build && node html-to-markdown.js",
     "markdown": "node html-to-markdown.js"
   },
   "keywords": [

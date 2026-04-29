@@ -28,12 +28,28 @@ A0_CANONICAL = 1.2e-10 # m/s^2 (Milgrom 1983)
 # ── MOND ν-functions ─────────────────────────────────────────────────
 
 def nu_simple(x):
-    """Simple ν-function (Famaey & Binney 2005). x = g/a_0."""
+    """Simple (n=1) ν-function (Famaey & Binney 2005, Eq. 8). x = g_N/a_0.
+
+    ν(x) = (1 + √(1 + 4/x)) / 2
+
+    Asymptotic limits:
+      x → ∞  : ν → 1                       (Newtonian)
+      x → 0  : ν → x^(-1/2)                (deep-MOND: g = √(a_0 g_N))
+    """
     return 0.5 * (1.0 + np.sqrt(1.0 + 4.0 / np.maximum(x, 1e-30)))
 
 def nu_standard(x):
-    """Standard ν-function (Milgrom 1983)."""
-    return 1.0 / np.sqrt(np.maximum(1.0 - np.exp(-np.sqrt(np.maximum(x, 1e-30))), 1e-30))
+    """Standard (n=2) ν-function — inverse of Milgrom (1983) μ(y)=y/√(1+y²).
+
+    Famaey & Binney (2005, Eq. 9):
+        ν(x) = √[ (1 + √(1 + 4/x²)) / 2 ]
+
+    Asymptotic limits:
+      x → ∞  : ν → 1                       (Newtonian)
+      x → 0  : ν → x^(-1/2)                (deep-MOND: g = √(a_0 g_N))
+    """
+    x_safe = np.maximum(x, 1e-30)
+    return np.sqrt(0.5 * (1.0 + np.sqrt(1.0 + 4.0 / x_safe**2)))
 
 # ── EFE-modified MOND (angle-averaged QUMOND) ────────────────────────
 
@@ -178,7 +194,11 @@ def main():
     print("=" * 60)
 
     g_TEP = 5.0e-10  # m/s^2, from Smawfield 2025b (Paper 7, SPARC fits)
-    R_s_obs = 2461.0  # AU
+    # Load observed R_s dynamically from step_003 fit summary (avoid stale hardcoded value)
+    fit_summary_path = PROJECT_ROOT / "results" / "outputs" / "003_screening_fit_summary.csv"
+    fit_summary = pd.read_csv(fit_summary_path)
+    R_s_obs = float(fit_summary["r_s_au"].iloc[0])  # AU
+    print(f"Loaded R_s_obs = {R_s_obs:.1f} AU from {fit_summary_path.name}")
 
     # Mass at the transition bins (bins 10-12, separations 1715-3363 AU)
     M_transition = np.mean(M_per_bin[10:13])

@@ -25,6 +25,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from scripts.utils.logger import TEPLogger, set_step_logger, print_status
+from scripts.utils.tep_model import GLOBAL_BINS
 from scripts.steps.step_003_screening_test import (
     tep_screening_model,
     flat_newtonian_model,
@@ -33,7 +34,6 @@ from scripts.steps.step_003_screening_test import (
     information_criteria,
 )
 
-GLOBAL_BINS = np.logspace(np.log10(50), np.log10(30000), 20)
 NULL_ITERATIONS = 10000
 RV_ERR_MAX = 5.0
 RV_DELTA_MAX = 5.0

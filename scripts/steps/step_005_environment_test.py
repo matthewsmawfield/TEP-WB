@@ -41,7 +41,13 @@ from scipy.optimize import curve_fit
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 from scripts.utils.logger import TEPLogger, print_status, set_step_logger
-from scripts.utils.tep_model import GLOBAL_BINS
+from scripts.utils.tep_model import (
+    GLOBAL_BINS,
+    GLOBAL_ALPHA,
+    G_AU,
+    BOOTSTRAP_SEED,
+    tep_screening_model_fixed_alpha,
+)
 
 # Set publication-quality matplotlib defaults
 plt.rcParams.update(
@@ -60,15 +66,9 @@ plt.rcParams.update(
     }
 )
 
-# Fix alpha to a global constant to break the degeneracy between alpha and R_s
-# The global signal saturates at roughly +40% in v_tilde (alpha=0.4)
-GLOBAL_ALPHA = 0.4
-BOOTSTRAP_SEED = 314159
+# GLOBAL_ALPHA, BOOTSTRAP_SEED and tep_screening_model_fixed_alpha are imported
+# from scripts.utils.tep_model (canonical definitions).
 PERMUTATION_ITERATIONS = 10000
-
-
-def tep_screening_model_fixed_alpha(s, r_s):
-    return 1.0 + GLOBAL_ALPHA * (1.0 - np.exp(-s / r_s))
 
 
 def fit_transition_radius(x, y, yerr, p0, bounds):
@@ -287,7 +287,12 @@ def perform_environment_test():
     mask_low_z = np.abs(df["Z_gc"]) < 0.1  # Inner Disk
     mask_high_z = np.abs(df["Z_gc"]) > 0.15  # Halo / Thick Disk
 
-    # Normalize each population to its own inner Keplerian baseline
+    # Normalize each population to its own inner Keplerian baseline.
+    # We use the median of all v_tilde values with sep < 500 AU within each
+    # Z-stratum, rather than the step_003 convention (mean of the first 5 bin
+    # medians). This is deliberate: stratified subsamples have sparse inner
+    # bins (especially high-|Z|), so bin-median averaging would be dominated
+    # by sampling noise. The two conventions agree to ≲ 1% on the full sample.
     df_inner = df[df["sep_AU"] < 500]
     base_low_z = df_inner[np.abs(df_inner["Z_gc"]) < 0.1]["v_tilde"].median()
     base_high_z = df_inner[np.abs(df_inner["Z_gc"]) > 0.15]["v_tilde"].median()
@@ -654,7 +659,6 @@ def perform_environment_test():
     df_solar = df[np.abs(df["delta_c"]) < 0.05].copy()
 
     # Recalculate kinematics just using uncorrected mass for this subset to be bulletproof
-    G_AU = 887.1
     df_solar["v_circ_uncorr"] = np.sqrt(
         G_AU * (df_solar["mass1_est"] + df_solar["mass2_est"]) / df_solar["sep_AU"]
     )
@@ -883,8 +887,15 @@ def perform_environment_test():
     rho_full_med = galactic_baryonic_density(Z_full_med)
 
     # Physical constants for ε_env
+    # Load observed R_s dynamically from step_003 fit summary (avoid stale hardcoded value)
+    fit_summary_path = PROJECT_ROOT / "results" / "outputs" / "003_screening_fit_summary.csv"
+    if fit_summary_path.exists():
+        fit_summary = pd.read_csv(fit_summary_path)
+        R_s_full_au = float(fit_summary["r_s_au"].iloc[0])
+    else:
+        R_s_full_au = 2646.0  # fallback if step_003 hasn't run (current best-fit)
     M_binary_kg = 1.2 * 1.989e30  # 1.2 M_sun in kg
-    R_s_full_m = 2461.0 * 1.496e11  # 2461 AU in metres
+    R_s_full_m = R_s_full_au * 1.496e11  # AU to metres
     rho_floor_SI = 3.0 * M_binary_kg / (4.0 * np.pi * R_s_full_m**3)  # kg/m³
     rho_floor_cgs = rho_floor_SI * 1e-3  # g/cm³
     rho_c_cgs = 20.0  # g/cm³ (TEP universal critical density)
@@ -929,7 +940,7 @@ def perform_environment_test():
         rs_grid_n1,
         "k-",
         linewidth=1.2,
-        label="Chameleon $n=1$ prediction",
+        label="Scaling benchmark ($n=1$)",
     )
     # Data points from joint fit
     ax_cham.errorbar(
@@ -954,7 +965,7 @@ def perform_environment_test():
     )
     ax_cham.set_xlabel("$|Z|$ [pc]")
     ax_cham.set_ylabel("$R_s$ [AU]")
-    ax_cham.set_title("Chameleon Scaling Prediction vs Observed $R_s$")
+    ax_cham.set_title("Environmental Scaling Benchmark vs Observed $R_s$")
     ax_cham.legend()
     ax_cham.grid(True, alpha=0.3)
     fig_cham.tight_layout()
@@ -970,8 +981,6 @@ def perform_environment_test():
         "MLR Sensitivity Test: checking environmental ordering under alternative mass corrections...",
         "PROCESS",
     )
-
-    G_AU = 887.1
 
     # Build delta_c for star 2 (star 1's delta_c is already in the dataframe)
     if "c_ref" in df.columns and "Mg2" in df.columns and "bp_rp2" in df.columns:

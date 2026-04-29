@@ -38,10 +38,7 @@ from scripts.utils.logger import TEPLogger, set_step_logger, print_status
 from scripts.utils.download_mamajek import download_mamajek
 from scripts.utils.parse_mamajek import clean_mamajek
 from scripts.utils.gaia_metallicity import add_metallicity_column
-
-# G in (km/s)^2 * AU / M_sun
-# G = 6.67430e-11 m^3 / (kg s^2) converted to these units.
-G_AU = 887.1 
+from scripts.utils.tep_model import G_AU, MLR_BETA_PRIOR
 
 def analyze_kinematics():
     print_status("Initializing Kinematic Analysis Pipeline", "TITLE")
@@ -137,85 +134,99 @@ def analyze_kinematics():
         # Therefore, we must decrease their mass relative to the Mamajek solar estimate.
         # Beta is an empirical calibration factor relating color residual to mass offset.
         #
-        # EMPIRICAL CALIBRATION:
-        # Using photometric [Fe/H] estimates derived from the color-magnitude deviation,
-        # we perform a linear regression: ΔM/M = β × ΔC + ε
-        #
-        # The fractional mass residual ΔM/M is derived from photometric metallicity via:
-        #   M_true/M_solar ≈ 1 - 0.8 × [Fe/H] (empirical MLR slope for M dwarfs)
-        #   ΔM/M = (M_true - M_solar) / M_solar
-        #
-        # Expected range from stellar physics (Covey et al. 2008):
-        #   β ≈ 1.4–1.6 (0.1 dex metallicity shift → 0.03–0.04 mag in Bp-Rp for M dwarfs)
+        # CALIBRATION GUARDRAIL:
+        # Use only independent spectroscopic [Fe/H] values to calibrate beta_MLR.
+        # Photometric [Fe/H] proxies are derived from delta_c and would be circular
+        # if regressed back onto delta_c. If no spectroscopic cache is present, use
+        # the conservative literature prior from tep_model.MLR_BETA_PRIOR; step_005
+        # then stress-tests the environmental ordering across beta=0, 1, 2 and a
+        # quadratic correction.
 
         if 'feh' not in df_disk.columns:
-            print_status("ERROR: Metallicity column 'feh' not found. Cannot perform empirical calibration.", "ERROR")
+            print_status("ERROR: Metallicity column 'feh' not found. Cannot perform mass-bias calibration.", "ERROR")
             sys.exit(1)
 
-        mask_valid_feh = df_disk['feh'].notna() & np.isfinite(df_disk['feh'])
+        source = df_disk.get('feh_source', pd.Series('', index=df_disk.index)).fillna('')
+        mask_valid_feh = (
+            df_disk['feh'].notna() &
+            np.isfinite(df_disk['feh']) &
+            source.eq('spectroscopic')
+        )
         n_valid_feh = mask_valid_feh.sum()
 
-        if n_valid_feh < 100:
-            print_status(f"ERROR: Insufficient metallicities for β calibration (N={n_valid_feh}, need ≥100)", "ERROR")
-            sys.exit(1)
+        if n_valid_feh >= 100:
+            # Calculate mass residual from independent spectroscopic metallicity.
+            # Metal-poor stars (feh < 0) are more luminous -> lower mass at fixed Mg.
+            # M_true / M_solar_est = 1 + 0.8 * [Fe/H] (stellar-physics prior).
+            df_disk_cal = df_disk[mask_valid_feh].copy()
+            delta_feh = df_disk_cal['feh'].values
+            mass_ratio_true = 1.0 + 0.8 * delta_feh
+            fractional_mass_residual = mass_ratio_true - 1.0
+            delta_c_cal = df_disk_cal['delta_c'].values
 
-        # Calculate mass residual from photometric metallicity
-        df_disk_cal = df_disk[mask_valid_feh].copy()
-        delta_feh = df_disk_cal['feh'].values  # [Fe/H] relative to solar
-        mass_ratio_true = 1.0 - 0.8 * delta_feh  # M_true / M_solar_estimate
-        fractional_mass_residual = mass_ratio_true - 1.0  # ΔM/M
+            valid_mask = (
+                (np.abs(delta_c_cal) < 0.5) &
+                np.isfinite(fractional_mass_residual) &
+                (np.abs(fractional_mass_residual) < 0.5)
+            )
+            n_for_regression = valid_mask.sum()
 
-        # Extract color residuals (now computed above)
-        delta_c_cal = df_disk_cal['delta_c'].values
+            if n_for_regression < 50:
+                print_status(f"ERROR: Insufficient spectroscopic stars after outlier rejection (N={n_for_regression}, need ≥50)", "ERROR")
+                sys.exit(1)
 
-        # Robust regression: filter extreme outliers
-        valid_mask = (
-            (np.abs(delta_c_cal) < 0.5) &
-            np.isfinite(fractional_mass_residual) &
-            (np.abs(fractional_mass_residual) < 0.5)
-        )
-        n_for_regression = valid_mask.sum()
+            from scipy import stats as scipy_stats
+            slope, intercept, r_value, p_value, std_err = scipy_stats.linregress(
+                delta_c_cal[valid_mask], fractional_mass_residual[valid_mask]
+            )
 
-        if n_for_regression < 50:
-            print_status(f"ERROR: Insufficient stars after outlier rejection (N={n_for_regression}, need ≥50)", "ERROR")
-            sys.exit(1)
+            if p_value > 0.001:
+                print_status(f"ERROR: β calibration statistically insignificant (p={p_value:.4f}, need p<0.001)", "ERROR")
+                sys.exit(1)
 
-        # Perform linear regression
-        from scipy import stats as scipy_stats
-        slope, intercept, r_value, p_value, std_err = scipy_stats.linregress(
-            delta_c_cal[valid_mask], fractional_mass_residual[valid_mask]
-        )
+            if not (0.3 < slope < 4.0):
+                print_status(f"ERROR: β = {slope:.3f} outside physically reasonable range (0.3–4.0)", "ERROR")
+                sys.exit(1)
 
-        # Validate regression quality
-        if p_value > 0.001:
-            print_status(f"ERROR: β calibration statistically insignificant (p={p_value:.4f}, need p<0.001)", "ERROR")
-            sys.exit(1)
+            beta = float(slope)
+            beta_err = float(std_err)
+            calibration_mode = "spectroscopic"
+            p_value_out = max(float(p_value), 1e-300)
 
-        if not (0.3 < slope < 4.0):
-            print_status(f"ERROR: β = {slope:.3f} outside physically reasonable range (0.3–4.0)", "ERROR")
-            sys.exit(1)
-
-        beta = float(slope)
-
-        # Report calibration results
-        print_status("=" * 60, "INFO")
-        print_status("EMPIRICAL β_MLR CALIBRATION COMPLETE", "SUCCESS")
-        print_status(f"  β = {beta:.4f} ± {std_err:.4f}", "RESULT")
-        print_status(f"  Pearson r = {r_value:.4f}", "RESULT")
-        print_status(f"  p-value = {p_value:.2e}", "RESULT")
-        print_status(f"  N = {n_for_regression} stars", "RESULT")
-        print_status(f"  intercept = {intercept:.4f}", "RESULT")
-        print_status("=" * 60, "INFO")
+            print_status("=" * 60, "INFO")
+            print_status("INDEPENDENT SPECTROSCOPIC β_MLR CALIBRATION COMPLETE", "SUCCESS")
+            print_status(f"  β = {beta:.4f} ± {beta_err:.4f}", "RESULT")
+            print_status(f"  Pearson r = {r_value:.4f}", "RESULT")
+            print_status(f"  p-value = {p_value_out:.2e}", "RESULT")
+            print_status(f"  N = {n_for_regression} spectroscopic stars", "RESULT")
+            print_status(f"  intercept = {intercept:.4f}", "RESULT")
+            print_status("=" * 60, "INFO")
+        else:
+            beta = float(MLR_BETA_PRIOR)
+            beta_err = 0.5
+            calibration_mode = "literature_prior"
+            r_value = np.nan
+            p_value_out = np.nan
+            n_for_regression = int(n_valid_feh)
+            intercept = np.nan
+            print_status(
+                f"Only {n_valid_feh} independent spectroscopic metallicities available; "
+                f"using conservative literature β_MLR prior = {beta:.2f} ± {beta_err:.2f}. "
+                "Photometric [Fe/H] proxies are retained for diagnostics but are not used to self-calibrate β.",
+                "WARNING",
+            )
 
         # Save calibration results for downstream analysis
         calib_results = {
             'beta': float(beta),
-            'beta_err': float(std_err),
-            'r_value': float(r_value),
-            'p_value': float(p_value),
+            'beta_err': float(beta_err),
+            'r_value': None if not np.isfinite(r_value) else float(r_value),
+            'p_value': None if not np.isfinite(p_value_out) else float(p_value_out),
             'n_stars': int(n_for_regression),
-            'intercept': float(intercept),
-            'reference': 'Photometric [Fe/H] from Gaia DR3 BP/RP color-magnitude deviation (Covey et al. 2008 calibration)'
+            'n_spectroscopic_available': int(n_valid_feh),
+            'intercept': None if not np.isfinite(intercept) else float(intercept),
+            'calibration_mode': calibration_mode,
+            'reference': 'Spectroscopic-only calibration when available; otherwise conservative Covey/Ivezic color-MLR prior with explicit sensitivity tests'
         }
 
         calib_path = PROJECT_ROOT / "results" / "outputs" / "002_beta_mlr_calibration.json"

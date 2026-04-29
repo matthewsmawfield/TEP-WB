@@ -28,12 +28,20 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 # ── MOND interpolating functions ──────────────────────────────────────
 
 def nu_simple(x):
-    """Simple ν-function (Famaey & Binney 2005)."""
-    return 0.5 * (1.0 + np.sqrt(1.0 + 4.0 / x))
+    """Simple (n=1) ν-function (Famaey & Binney 2005, Eq. 8). x = g_N/a_0.
+
+    ν(x) = (1 + √(1 + 4/x)) / 2,  deep-MOND limit ν → x^(-1/2).
+    """
+    return 0.5 * (1.0 + np.sqrt(1.0 + 4.0 / np.maximum(x, 1e-30)))
 
 def nu_standard(x):
-    """Standard ν-function (Milgrom 1983)."""
-    return 1.0 / np.sqrt(1.0 - np.exp(-np.sqrt(x)))
+    """Standard (n=2) ν-function — inverse of Milgrom (1983) μ(y)=y/√(1+y²).
+
+    Famaey & Binney (2005, Eq. 9):
+        ν(x) = √[ (1 + √(1 + 4/x²)) / 2 ],  deep-MOND limit ν → x^(-1/2).
+    """
+    x_safe = np.maximum(x, 1e-30)
+    return np.sqrt(0.5 * (1.0 + np.sqrt(1.0 + 4.0 / x_safe**2)))
 
 # ── MOND model for the normalised velocity profile ───────────────────
 
@@ -65,8 +73,7 @@ def _make_mond_model(nu_func, s_norm):
 
 # ── TEP model (for reference chi2) ───────────────────────────────────
 
-def tep_screening_model(s, r_s, alpha):
-    return 1.0 + alpha * (1.0 - np.exp(-s / r_s))
+from scripts.utils.tep_model import tep_screening_model  # noqa: E402
 
 # ── Fit helpers ───────────────────────────────────────────────────────
 
