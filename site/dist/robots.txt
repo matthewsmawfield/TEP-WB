@@ -1,2 +1,5 @@
 User-agent: *
 Allow: /
+
+# Sitemap location
+Sitemap: https://matthewsmawfield.github.io/TEP-WB/sitemap.xml
