@@ -12,7 +12,7 @@ abstract: >
   with outer orbits saturating at alpha_sat = 0.366 ± 0.012 above the Keplerian baseline.
   The signal shows the environmental ordering required by TEP; Newtonian forward models
   do not reproduce the observed outer plateau.
-type: article
+type: software
 version: "v0.3 (Kilifi)"
 date-released: 2026-03-19
 doi: 10.5281/zenodo.19102061
