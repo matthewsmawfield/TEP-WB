@@ -13,8 +13,8 @@ abstract: 'The Gaia DR3 wide-binary catalog tests whether weak-field velocity ex
 
   '
 title: 'Temporal Equivalence Principle: Temporal Shear Recovery in Gaia DR3 Wide Binaries'
-type: software
-version: "0.4" (Kilifi)
+type: article
+version: v0.4 (Kilifi)
 date-released: 2026-06-05
 doi: 10.5281/zenodo.19102061
 url: https://github.com/matthewsmawfield/TEP-WB
@@ -44,3 +44,16 @@ keywords:
 - gravitational anomaly
 - environmental screening
 - stellar dynamics
+
+preferred-citation:
+  type: article
+  title: 'Temporal Equivalence Principle: Temporal Shear Recovery in Gaia DR3 Wide Binaries'
+  authors:
+  - family-names: Smawfield
+    given-names: Matthew Lukin
+    orcid: https://orcid.org/0009-0003-8219-3159
+  year: 2026
+  journal: Zenodo
+  doi: 10.5281/zenodo.19102061
+  url: https://doi.org/10.5281/zenodo.19102061
+  notes: Preprint v0.3 (Kilifi)
