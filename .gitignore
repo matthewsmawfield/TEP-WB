@@ -60,3 +60,5 @@ site/.nojekyll
 # Temporary files
 *.tmp
 *.temp
+
+.devin

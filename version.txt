@@ -1,3 +1,5 @@
+v0.4 (Kilifi) — 05 June 2026 — Renamed conformal coupling notation from beta_conf to beta_A to avoid PPN collision
+
 v0.3 (Kilifi) - Temporal Shear Recovery Update
 
 - Adopted TEP v0.8 Jakarta framework with Temporal Shear recovery nomenclature.
