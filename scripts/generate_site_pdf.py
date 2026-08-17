@@ -102,7 +102,7 @@ def copy_pdf_to_docs(source_pdf: Path, docs_dir: Path):
     metadata = load_citation_metadata()
     version_str = f"v{metadata['version']}-{metadata['codename']}"
 
-    # Primary PDF name (13-TEP-WB-v0.2-Kilifi.pdf format)
+    # Primary PDF name (13-TEP-WB-v0.5-Kilifi.pdf format)
     target_name = f"13-TEP-WB-{version_str}.pdf"
     target_path = docs_dir / target_name
     
@@ -122,7 +122,7 @@ def copy_pdf_to_root(source_pdf: Path, base_dir: Path):
     metadata = load_citation_metadata()
     version_str = f"v{metadata['version']}-{metadata['codename']}"
 
-    # Primary PDF name (13-TEP-WB-v0.2-Kilifi.pdf format)
+    # Primary PDF name (13-TEP-WB-v0.5-Kilifi.pdf format)
     target_name = f"13-TEP-WB-{version_str}.pdf"
     target_path = base_dir / target_name
     
@@ -247,11 +247,23 @@ async def generate_pdf(quality: str = 'high', wait_time: float = 5.0, skip_build
         # Copy to docs directory
         final_pdf = copy_pdf_to_docs(output_pdf, docs_dir)
         
-        # Copy to root directory
+        # Process with metadata (compress + embed) before copying to root
+        process_pdf_with_metadata(final_pdf)
+        
+        # Copy the processed PDF to root directory (after compression + metadata)
         copy_pdf_to_root(final_pdf, base_dir)
         
-        # Process with metadata
-        process_pdf_with_metadata(final_pdf)
+        # Also copy to dist/public/docs/ (build.js copies the old PDF, so update it)
+        dist_docs_dir = dist_dir / 'public' / 'docs'
+        if dist_docs_dir.exists():
+            import shutil
+            shutil.copy2(final_pdf, dist_docs_dir / final_pdf.name)
+            print(f"📄 Copied to dist: {dist_docs_dir / final_pdf.name}")
+        
+        # Clean up temporary manuscript.pdf in dist
+        temp_pdf = dist_dir / 'manuscript.pdf'
+        if temp_pdf.exists():
+            temp_pdf.unlink()
         
         print(f"\n✅ Complete! PDF available at:")
         print(f"   {final_pdf}")

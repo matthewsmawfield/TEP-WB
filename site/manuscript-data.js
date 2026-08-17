@@ -501,6 +501,32 @@ function createManuscriptContext(options = {}) {
       formatFixed(toNumber(screening.chi2) + 4, 1),
       "0",
     ],
+    [
+      "Mass-convolved TEP",
+      "2",
+      `${formatInteger(modelComparison.Mass_Convolved_TEP?.r_s_or_s_trans)}`,
+      `${formatFixed(modelComparison.Mass_Convolved_TEP?.alpha, 3)}`,
+      formatFixed(modelComparison.Mass_Convolved_TEP?.chi2, 1),
+      formatInteger(screening.dof),
+      formatFixed(
+        toNumber(modelComparison.Mass_Convolved_TEP?.chi2) /
+          toNumber(screening.dof),
+        1,
+      ),
+      formatSigned(
+        modelComparison.Mass_Convolved_TEP?.delta_chi2_vs_tep,
+        1,
+      ),
+      formatFixed(
+        toNumber(modelComparison.Mass_Convolved_TEP?.chi2) + 4,
+        1,
+      ),
+      formatSigned(
+        toNumber(modelComparison.Mass_Convolved_TEP?.delta_chi2_vs_tep) /
+          inflation,
+        0,
+      ),
+    ],
   ];
   const modelComparisonRows = [...modelRows, ...mondRows]
     .map(
@@ -673,6 +699,27 @@ function createManuscriptContext(options = {}) {
         double_exp_delta_chi2_inflated: formatSigned(
           toNumber(modelComparison.Double_Exponential?.delta_chi2_vs_tep) /
             inflation,
+          0,
+        ),
+        mass_convolved_r_s_au_int: formatInteger(
+          modelComparison.Mass_Convolved_TEP?.r_s_or_s_trans,
+        ),
+        mass_convolved_alpha: formatFixed(
+          modelComparison.Mass_Convolved_TEP?.alpha,
+          3,
+        ),
+        mass_convolved_chi2: formatFixed(
+          modelComparison.Mass_Convolved_TEP?.chi2,
+          1,
+        ),
+        mass_convolved_delta_chi2: formatSigned(
+          modelComparison.Mass_Convolved_TEP?.delta_chi2_vs_tep,
+          1,
+        ),
+        mass_convolved_delta_chi2_inflated: formatSigned(
+          toNumber(
+            modelComparison.Mass_Convolved_TEP?.delta_chi2_vs_tep,
+          ) / inflation,
           0,
         ),
         sigmoid_delta_chi2: formatSigned(
@@ -1011,6 +1058,13 @@ function createManuscriptContext(options = {}) {
         fine_z_spearman_p: formatFixed(chameleonFine?.spearman_p, 2),
         fine_z_n_inferred: formatFixed(chameleonFine?.chameleon_n_inferred, 2),
         fine_z_n_err: formatFixed(chameleonFine?.chameleon_n_err, 2),
+        fine_z_direct_n: formatFixed(chameleonFine?.direct_n, 2),
+        fine_z_direct_n_err: formatFixed(chameleonFine?.direct_n_err, 2),
+        fine_z_direct_n1_p: formatFixed(chameleonFine?.direct_n1_p, 3),
+        fine_z_wlr_p: formatFixed(chameleonFine?.wlr_p, 4),
+        fine_z_wlr_t: formatFixed(chameleonFine?.wlr_t, 2),
+        fine_z_pearson_r: formatFixed(chameleonFine?.pearson_r, 2),
+        fine_z_pearson_p: formatFixed(chameleonFine?.pearson_p, 3),
         spatial_corr_dist: formatFixed(spatialCorrDist, 2),
         spatial_corr_spread: formatFixed(spatialCorrSpread, 2),
         spatial_corr_kurt: formatFixed(spatialCorrKurt, 2),
@@ -1212,6 +1266,11 @@ function createManuscriptContext(options = {}) {
       },
     },
   };
+
+  const screeningNoticePath = path.join(__dirname, '..', 'core', 'screening_projection_notice.html');
+  context.SCREENING_PROJECTION_NOTICE = fs.existsSync(screeningNoticePath)
+    ? fs.readFileSync(screeningNoticePath, 'utf8').trim()
+    : '';
 
   if (writeArtifact) {
     fs.mkdirSync(OUTPUTS_DIR, { recursive: true });

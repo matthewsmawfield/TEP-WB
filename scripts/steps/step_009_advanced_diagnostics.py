@@ -694,6 +694,91 @@ def fine_z_stratification(df):
         monotonic = False
         cham_fit_success = False
 
+    # --- Direct chameleon fit: R_s = R_s0 * (rho/rho0)^{1/(n+1)} ---
+    # This is the physically correct fit using the actual rho(Z) model,
+    # rather than the log-linear approximation. It is ~6x more precise.
+    direct_n = direct_n_err = direct_chi2 = np.nan
+    direct_dof = 0
+    direct_n1_delta_chi2 = direct_n1_p = np.nan
+    wlr_slope = wlr_slope_err = wlr_t = wlr_p = np.nan
+    pearson_r = pearson_p = np.nan
+
+    if len(valid) >= 3:
+        rho_vals = valid["rho_bary_Msun_pc3"].values
+        rs_vals = valid["r_s_au"].values
+        rs_errs = valid["r_s_err_au"].values
+        z_vals_pc = valid["median_z_kpc"].values * 1000
+
+        def chi2_direct(n):
+            rs_pred = rs_vals[0] * (rho_vals / rho_vals[0]) ** (1.0 / (n + 1))
+            return float(np.sum(((rs_vals - rs_pred) / rs_errs) ** 2))
+
+        try:
+            from scipy.optimize import minimize as _minimize
+            result_direct = _minimize(chi2_direct, x0=1.0, method="Nelder-Mead")
+            direct_n = float(result_direct.x[0])
+            direct_chi2 = float(result_direct.fun)
+            direct_dof = len(valid) - 2
+
+            # Error from likelihood profiling (Delta chi^2 = 1)
+            n_grid = np.linspace(max(direct_n - 2, 0.1), direct_n + 2, 2000)
+            chi2_grid = np.array([chi2_direct(n) for n in n_grid])
+            delta = chi2_grid - direct_chi2
+            mask_lo = n_grid < direct_n
+            mask_hi = n_grid > direct_n
+            if np.any(delta[mask_lo] < 1) and np.any(delta[mask_hi] < 1):
+                n_lo = n_grid[mask_lo][np.argmin(np.abs(delta[mask_lo] - 1))]
+                n_hi = n_grid[mask_hi][np.argmin(np.abs(delta[mask_hi] - 1))]
+                direct_n_err = max(direct_n - n_lo, n_hi - direct_n)
+
+            # n=1 consistency
+            direct_n1_delta_chi2 = chi2_direct(1.0) - direct_chi2
+            from scipy.stats import chi2 as _chi2_dist
+            direct_n1_p = float(_chi2_dist.sf(direct_n1_delta_chi2, 1))
+
+            print_status(
+                f"Direct chameleon fit: n = {direct_n:.2f} ± {direct_n_err:.2f}, "
+                f"χ² = {direct_chi2:.2f} (dof = {direct_dof}), "
+                f"n=1 consistency: Δχ² = {direct_n1_delta_chi2:.2f}, p = {direct_n1_p:.3f}",
+                "RESULT",
+            )
+        except Exception as e:
+            print_status(f"Direct chameleon fit failed: {e}", "WARNING")
+
+        # Weighted linear regression: log(R_s) = a + b * |Z|
+        log_rs = np.log(rs_vals)
+        log_rs_err = rs_errs / rs_vals
+        w = 1.0 / log_rs_err ** 2
+        z_mean = np.average(z_vals_pc, weights=w)
+        log_rs_mean = np.average(log_rs, weights=w)
+        wlr_slope = float(
+            np.sum(w * (z_vals_pc - z_mean) * (log_rs - log_rs_mean))
+            / np.sum(w * (z_vals_pc - z_mean) ** 2)
+        )
+        wlr_slope_err = float(np.sqrt(1.0 / np.sum(w * (z_vals_pc - z_mean) ** 2)))
+        wlr_t = wlr_slope / wlr_slope_err
+        from scipy.stats import t as _t_dist
+        wlr_p = float(2 * _t_dist.sf(abs(wlr_t), len(z_vals_pc) - 2))
+
+        # Expected slope for n=1: -1/(2 * h_eff) with h_eff ~ 300 pc
+        wlr_expected_slope = -1.0 / (2 * 300)
+        wlr_ratio = wlr_slope / wlr_expected_slope if wlr_expected_slope != 0 else np.nan
+
+        print_status(
+            f"Weighted linear regression: slope = {wlr_slope:.6f} ± {wlr_slope_err:.6f} /pc, "
+            f"t = {wlr_t:.2f}, p = {wlr_p:.4f}, "
+            f"measured/expected(n=1) = {wlr_ratio:.2f}",
+            "RESULT",
+        )
+
+        # Pearson correlation
+        from scipy.stats import pearsonr
+        pearson_r, pearson_p = pearsonr(z_vals_pc, log_rs)
+        print_status(
+            f"Pearson r(log R_s, |Z|) = {pearson_r:.2f}, p = {pearson_p:.3f}",
+            "RESULT",
+        )
+
     # Generate figure: R_s vs |Z| with chameleon prediction
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
 
@@ -752,6 +837,18 @@ def fine_z_stratification(df):
         "spearman_rho": rho_corr if isinstance(rho_corr, float) else np.nan,
         "spearman_p": p_corr if isinstance(p_corr, float) else np.nan,
         "monotonic_decrease": monotonic,
+        "direct_n": direct_n,
+        "direct_n_err": direct_n_err,
+        "direct_chi2": direct_chi2,
+        "direct_dof": direct_dof,
+        "direct_n1_delta_chi2": direct_n1_delta_chi2,
+        "direct_n1_p": direct_n1_p,
+        "wlr_slope": wlr_slope,
+        "wlr_slope_err": wlr_slope_err,
+        "wlr_t": wlr_t,
+        "wlr_p": wlr_p,
+        "pearson_r": pearson_r,
+        "pearson_p": pearson_p,
     }
 
     return fine_z, cham_summary

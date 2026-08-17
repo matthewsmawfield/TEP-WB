@@ -61,4 +61,4 @@ site/.nojekyll
 *.tmp
 *.temp
 
-.devin
+.devin/

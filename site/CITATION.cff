@@ -7,17 +7,19 @@ authors:
 abstract: 'The Gaia DR3 wide-binary catalog tests whether weak-field velocity excesses
   are better described as smooth Temporal Shear recovery in TEP. From 341,315 high-purity
   systems, the analysis identifies a screening transition at R_s = 2,646 ± 182 AU
-  (±609 AU total), with outer orbits saturating at alpha_sat = 0.366 ± 0.012 above
-  the Keplerian baseline. The signal shows the environmental ordering required by
-  TEP; Newtonian forward models do not reproduce the observed outer plateau.
+  (±609 AU total), strongly preferred under diagonal, AR(1) and Gaussian-process covariance
+  treatments (covariance-aware Δχ² ≥ 1,073 against flat Newtonian; ≥ 284 against constant
+  boost), with outer orbits saturating at alpha_sat = 0.366 ± 0.012 above the Keplerian
+  baseline. The signal shows the environmental ordering required by TEP; Newtonian
+  forward models do not reproduce the observed outer plateau.
 
   '
 title: 'Temporal Equivalence Principle: Temporal Shear Recovery in Gaia DR3 Wide Binaries'
 type: article
-version: v0.4 (Kilifi)
-date-released: 2026-06-05
+version: v0.5 (Kilifi)
+date-released: 2026-03-19
 doi: 10.5281/zenodo.19102061
-url: https://github.com/matthewsmawfield/TEP-WB
+url: https://mlsmawfield.com/tep/wb
 license: CC-BY-4.0
 keywords:
 - Temporal Equivalence Principle
@@ -56,4 +58,4 @@ preferred-citation:
   journal: Zenodo
   doi: 10.5281/zenodo.19102061
   url: https://doi.org/10.5281/zenodo.19102061
-  notes: Preprint v0.3 (Kilifi)
+  notes: Preprint v0.5 (Kilifi)

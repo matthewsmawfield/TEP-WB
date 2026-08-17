@@ -237,26 +237,17 @@ async function buildStaticSite() {
         fs.writeFileSync(outputPath, staticContent, 'utf8');
         
         // Copy necessary static assets to dist
-        // EXPLICITLY COPY STYLES DIRECTORY
-        const assetDirs = ['public', 'figures', 'data', 'styles'];
+        const assetDirs = ['public'];
         for (const assetDir of assetDirs) {
             const srcPath = path.join(__dirname, assetDir);
             const destPath = path.join(distDir, assetDir);
-            
+
             if (fs.existsSync(srcPath)) {
                 console.log(`📁 Copying ${assetDir}/`);
                 copyRecursiveSync(srcPath, destPath);
             }
         }
 
-        // Copy simple-styles.css if it exists
-        const simpleStylesSrc = path.join(__dirname, 'simple-styles.css');
-        const simpleStylesDest = path.join(distDir, 'simple-styles.css');
-        if (fs.existsSync(simpleStylesSrc)) {
-            fs.copyFileSync(simpleStylesSrc, simpleStylesDest);
-            console.log('📁 Copied simple-styles.css');
-        }
-        
         // Copy figures from results/figures/ to dist/figures/ (main figure source)
         const resultsFiguresPath = path.join(__dirname, '..', 'results', 'figures');
         const distFiguresPath = path.join(distDir, 'figures');
@@ -284,7 +275,7 @@ async function buildStaticSite() {
         }
 
         // Copy robots.txt and sitemap.xml to dist root
-        const rootFiles = ['404.html', 'robots.txt', 'sitemap.xml', 'CNAME', '29c6507763d2303d801cc8ed89d39f88.txt', 'favicon.ico'];
+        const rootFiles = ['robots.txt', 'sitemap.xml', 'favicon.ico'];
         for (const file of rootFiles) {
             const src = path.join(__dirname, 'public', file);
             const dest = path.join(distDir, file);

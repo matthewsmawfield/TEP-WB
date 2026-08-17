@@ -12,7 +12,7 @@ class DevServer {
         this.buildQueue = false;
         this.liveServerProcess = null;
         this.watcherReady = false;
-        this.port = 51737; // Unique port for TEP-JWST
+        this.port = 51823; // Unique port for TEP-WB
     }
 
     async startLiveServer() {

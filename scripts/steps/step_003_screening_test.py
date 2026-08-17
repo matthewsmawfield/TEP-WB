@@ -283,6 +283,77 @@ def perform_screening_test():
         print_status("Double-exponential fit did not converge", "WARNING")
         dbl_exp_result = {"success": False, "chi2": np.inf}
 
+    # Model 4: Mass-convolved TEP (physically motivated broadening)
+    # v(s) = 1 + alpha * <1 - exp(-s/R_s(M))>_M
+    # where R_s(M) = R_s_ref * (M/M_ref)^(1/3) as TEP predicts.
+    # Same 2 free parameters (alpha, R_s_ref) as single-scale TEP.
+    print_status("Fitting Mass-Convolved TEP Model...", "PROCESS")
+
+    if "mass_total" in df.columns:
+        mass_col = "mass_total"
+        masses_all = df[mass_col].dropna()
+        M_ref = float(masses_all.median())
+
+        # Compute per-bin mass distributions
+        bin_masses_list = []
+        for bin_edge_lo, bin_edge_hi in zip(bins[:-1], bins[1:]):
+            bin_mask = (df["sep_AU"] >= bin_edge_lo) & (df["sep_AU"] < bin_edge_hi)
+            bin_masses = df.loc[bin_mask, mass_col].dropna().values
+            bin_masses_list.append(bin_masses)
+
+        def mass_convolved_v(s_arr, alpha, r_s_ref):
+            v = np.empty(len(s_arr), dtype=float)
+            for i in range(len(s_arr)):
+                bm = bin_masses_list[i]
+                if len(bm) == 0:
+                    v[i] = 1.0 + alpha * (1.0 - np.exp(-s_arr[i] / r_s_ref))
+                else:
+                    r_s_vals = r_s_ref * (bm / M_ref) ** (1.0 / 3.0)
+                    v[i] = 1.0 + alpha * np.mean(1.0 - np.exp(-s_arr[i] / r_s_vals))
+            return v
+
+        def mass_conv_chi2(params):
+            alpha, r_s_ref = params
+            if alpha < 0 or alpha > 0.8 or r_s_ref < 100 or r_s_ref > 50000:
+                return 1e10
+            v_model = mass_convolved_v(s_data, alpha, r_s_ref)
+            return float(np.sum(((v_data - v_model) / v_err) ** 2))
+
+        from scipy.optimize import minimize as _minimize
+        mc_opt = _minimize(
+            mass_conv_chi2, [0.4, 3000.0], method="Nelder-Mead",
+            options={"xatol": 1e-6, "fatol": 1e-6, "maxiter": 10000},
+        )
+        mc_chi2 = float(mc_opt.fun)
+        mc_alpha = float(mc_opt.x[0])
+        mc_r_s_ref = float(mc_opt.x[1])
+        mc_v_model = mass_convolved_v(s_data, mc_alpha, mc_r_s_ref)
+        mc_residuals = v_data - mc_v_model
+
+        mass_conv_result = {
+            "success": bool(mc_opt.success),
+            "params": np.array([mc_alpha, mc_r_s_ref]),
+            "errors": np.array([np.nan, np.nan]),  # Nelder-Mead doesn't give errors
+            "chi2": mc_chi2,
+            "dof": len(s_data) - 2,
+            "residuals": mc_residuals,
+            "model_values": mc_v_model,
+        }
+
+        if mass_conv_result["success"]:
+            delta_chi2_mc = mc_chi2 - tep_result["chi2"]
+            print_status(
+                f"Mass-Convolved TEP: χ² = {mc_chi2:.1f}, "
+                f"Δχ² = {delta_chi2_mc:+.1f} vs single-scale, "
+                f"R_s_ref = {mc_r_s_ref:.0f} AU",
+                "RESULT",
+            )
+        else:
+            print_status("Mass-convolved TEP fit did not converge", "WARNING")
+    else:
+        print_status("mass_total column not found — skipping mass-convolved model", "WARNING")
+        mass_conv_result = {"success": False, "chi2": np.inf}
+
     # =============================================================================
     # MODEL COMPARISON
     # =============================================================================
@@ -896,21 +967,24 @@ def perform_screening_test():
     # Model comparison table
     model_comparison = pd.DataFrame(
         {
-            "model": ["TEP_Exponential", "Sigmoid", "Double_Exponential"],
+            "model": ["TEP_Exponential", "Sigmoid", "Double_Exponential", "Mass_Convolved_TEP"],
             "r_s_or_s_trans": [
                 r_s_tep,
                 sigmoid_result["params"][0] if sigmoid_result["success"] else np.nan,
                 dbl_exp_result["params"][0] if dbl_exp_result["success"] else np.nan,
+                mass_conv_result["params"][1] if mass_conv_result["success"] else np.nan,
             ],
             "alpha": [
                 alpha_tep,
                 sigmoid_result["params"][2] if sigmoid_result["success"] else np.nan,
                 dbl_exp_result["params"][1] if dbl_exp_result["success"] else np.nan,
+                mass_conv_result["params"][0] if mass_conv_result["success"] else np.nan,
             ],
             "chi2": [
                 tep_result["chi2"],
                 sigmoid_result["chi2"] if sigmoid_result["success"] else np.nan,
                 dbl_exp_result["chi2"] if dbl_exp_result["success"] else np.nan,
+                mass_conv_result["chi2"] if mass_conv_result["success"] else np.nan,
             ],
             "delta_chi2_vs_tep": [
                 0,
@@ -920,8 +994,16 @@ def perform_screening_test():
                 dbl_exp_result["chi2"] - tep_result["chi2"]
                 if dbl_exp_result["success"]
                 else np.nan,
+                mass_conv_result["chi2"] - tep_result["chi2"]
+                if mass_conv_result["success"]
+                else np.nan,
             ],
-            "converged": [True, sigmoid_result["success"], dbl_exp_result["success"]],
+            "converged": [
+                True,
+                sigmoid_result["success"],
+                dbl_exp_result["success"],
+                mass_conv_result["success"],
+            ],
         }
     )
     model_comparison.to_csv(outputs_dir / "003_model_comparison.csv", index=False)

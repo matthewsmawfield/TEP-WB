@@ -3,11 +3,30 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19102061.svg)](https://doi.org/10.5281/zenodo.19102061)
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 
+## Abstract
+
+The Gaia DR3 catalog of over one million wide binaries opens a precise window onto gravity in the weak-field regime ($a \lesssim 10^{-10}\,\mathrm{m\,s^{-2}}$), yet whether the observed velocity excess reflects modified gravity or unresolved systematics remains contested.
+
+In the Temporal Equivalence Principle (TEP), a conformal scalar field modulates matter proper time as
+
+\begin{equation} \label{eq:conformal_relation} \mathrm{d}\tau/\mathrm{d}t \approx A(\phi),
+    \qquad
+    A(\phi)=\exp(\beta_A\phi/M_{\rm Pl}).
+    \end{equation}
+
+The Cepheid-calibrated response scale is denoted $\kappa_{\rm Cep}$, while the wide-binary transition is parameterized independently by the velocity-profile saturation amplitude $\alpha_{\rm sat}$, not by a bare scalar coupling. This paper tests whether the Gaia wide-binary anomaly is better described as smooth Temporal Shear recovery in weak-field environments.
+
+From 341,315 high-purity systems, the analysis identifies a screening transition at $R_s = 2{,}646 \pm 182$ AU (statistical; $\pm 609$ AU total), strongly preferred over both a flat Newtonian profile ($\Delta \chi^2 = 14{,}845$) and a constant boost ($\Delta \chi^2 = 3{,}583$). The transition is strongly preferred under diagonal, AR(1) and Gaussian-process covariance treatments; even the most conservative covariance-aware comparison gives $\Delta\chi^2 \ge 1{,}073$ against a flat Newtonian profile and $\Delta\chi^2 \ge 284$ against a constant boost. At large separation the profile saturates at $\alpha_{\rm sat} = 0.366 \pm 0.012$, roughly 35--40% above the Keplerian baseline. Broader smooth-transition fits preserve the same few-thousand-AU onset.
+
+The signal also shows the environmental ordering required by TEP. With a non-circular metallicity guardrail that uses a conservative external $\beta_{\rm MLR}$ prior unless independent spectroscopic metallicities are cached, the lower-density high-$|Z|$ population transitions at smaller radius than the higher-density midplane ($R_s = 4{,}662 \pm 196$ versus $7{,}131 \pm 1{,}341$ AU), confirmed by a solar-track control ($R_s = 4{,}145 \pm 276$ versus $6{,}856 \pm 920$ AU; permutation $p < 10^{-4}$ for the full sample and $p < 10^{-3}$ for the solar track). Scrambling tests and phase-mixed Newtonian orbital forward models fail to reproduce the observed screening preference. The wide-binary anomaly is therefore not a generic low-acceleration excess but a structured, environmentally modulated screening transition—one whose morphology, onset scale, and environmental ordering are quantitatively consistent with the conformal scalar field of TEP and are not reproduced by the Newtonian orbital-projection or MOND/EFE parameterizations tested here.
+
+*Keywords:* Temporal Equivalence Principle – wide binaries – Gaia DR3 – weak-field gravity – Temporal Shear recovery – environmental transition morphology – Temporal Topology – Temporal Shear – modified gravity – MOND
+
 ![TEP-WB Wide Binary Screening](site/public/image.webp)
 
 **Author:** Matthew Lukin Smawfield  
-**Version:** v0.4 (Kilifi)  
-**Date:** First published: 19 March 2026 · Last updated: 29 April 2026  
+**Version:** v0.5 (Kilifi)  
+**Date:** First published: 19 March 2026 · Last updated: 17 August 2026
 **Status:** Preprint (Open for Collaboration)  
 **DOI:** [10.5281/zenodo.19102061](https://doi.org/10.5281/zenodo.19102061)  
 **Website:** [https://mlsmawfield.com/tep/wb/](https://mlsmawfield.com/tep/wb/)  
@@ -17,9 +36,9 @@
 
 The Gaia DR3 catalog of over one million wide binaries opens a precise window onto gravity in the weak-field regime ($a \lesssim 10^{-10}$ m/s$^2$), yet whether the observed velocity excess reflects modified gravity or unresolved systematics remains contested.
 
-In the Temporal Equivalence Principle (TEP v0.9 Jakarta), a conformal scalar field modulates matter proper time as $\mathrm{d}\tau/\mathrm{d}t \approx A(\phi)$, with $A(\phi)=\exp(\beta\phi/M_{\rm Pl})$. The Cepheid-calibrated response scale is denoted $\kappa_{\rm Cep}$, while the wide-binary transition is parameterized independently by the velocity-profile saturation amplitude $\alpha_{\rm sat}$, not by a bare scalar coupling. This paper tests whether the Gaia wide-binary anomaly is better described as smooth Temporal Shear recovery in weak-field environments.
+In the Temporal Equivalence Principle (TEP), a conformal scalar field modulates matter proper time as $\mathrm{d}\tau/\mathrm{d}t \approx A(\phi)$, with $A(\phi)=\exp(\beta\phi/M_{\rm Pl})$. The Cepheid-calibrated response scale is denoted $\kappa_{\rm Cep}$, while the wide-binary transition is parameterized independently by the velocity-profile saturation amplitude $\alpha_{\rm sat}$, not by a bare scalar coupling. This paper tests whether the Gaia wide-binary anomaly is better described as smooth Temporal Shear recovery in weak-field environments.
 
-From 341,315 high-purity systems, the analysis identifies a screening transition at $R_s = 2{,}646 \pm 182$ AU (statistical; $\pm 609$ AU total), strongly preferred over both a flat Newtonian profile ($\Delta \chi^2 = 14{,}845$) and a constant boost ($\Delta \chi^2 = 3{,}583$). At large separation the profile saturates at $\alpha_{\rm sat} = 0.366 \pm 0.012$, roughly 35--40% above the Keplerian baseline. Broader smooth-transition fits preserve the same few-thousand-AU onset.
+From 341,315 high-purity systems, the analysis identifies a screening transition at $R_s = 2{,}646 \pm 182$ AU (statistical; $\pm 609$ AU total), strongly preferred over both a flat Newtonian profile ($\Delta \chi^2 = 14{,}845$) and a constant boost ($\Delta \chi^2 = 3{,}583$). The transition is strongly preferred under diagonal, AR(1) and Gaussian-process covariance treatments; even the most conservative covariance-aware comparison gives $\Delta\chi^2 \ge 1{,}073$ against a flat Newtonian profile and $\Delta\chi^2 \ge 284$ against a constant boost. At large separation the profile saturates at $\alpha_{\rm sat} = 0.366 \pm 0.012$, roughly 35--40% above the Keplerian baseline. Broader smooth-transition fits preserve the same few-thousand-AU onset.
 
 The signal also shows the environmental ordering required by TEP. With a non-circular metallicity guardrail that uses a conservative external $\beta_{\rm MLR}$ prior unless independent spectroscopic metallicities are cached, the lower-density high-$|Z|$ population transitions at smaller radius than the higher-density midplane ($R_s = 4{,}662 \pm 196$ versus $7{,}131 \pm 1{,}341$ AU), confirmed by a solar-track control ($R_s = 4{,}145 \pm 276$ versus $6{,}856 \pm 920$ AU; permutation $p < 10^{-4}$ for the full sample and $p < 10^{-3}$ for the solar track). Scrambling tests and phase-mixed Newtonian orbital forward models fail to reproduce the observed screening preference. The wide-binary anomaly is therefore not a generic low-acceleration excess but a structured, environmentally modulated screening transition—one whose morphology, onset scale, and environmental ordering are quantitatively consistent with the conformal scalar field of TEP and are not reproduced by the Newtonian orbital-projection or MOND/EFE parameterizations tested here.
 
@@ -81,7 +100,7 @@ To reproduce the analysis and generate the manuscript:
    ```bash
    npm run build:markdown --prefix site
    ```
-   The final manuscript will be available at `13-TEP-WB-v0.3-Kilifi.md`.
+   The final manuscript will be available at `13-TEP-WB-v0.5-Kilifi.md`.
 
 ## Citation
 
@@ -91,8 +110,8 @@ To reproduce the analysis and generate the manuscript:
   author={Smawfield, Matthew Lukin},
   journal={Zenodo},
   year={2026},
-  doi={10.5281/zenodo.19102062},
-  note={Preprint v0.4 (Kilifi)}
+  doi={10.5281/zenodo.19102061},
+  note={Preprint v0.5 (Kilifi)}
 }
 ```
 

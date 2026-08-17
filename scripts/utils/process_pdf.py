@@ -41,7 +41,7 @@ def _extract_yaml_value(content, key):
 
 def parse_citation_cff():
     """Parse CITATION.cff for PDF metadata."""
-    base_dir = Path(__file__).parent.parent
+    base_dir = Path(__file__).parent.parent.parent
     citation_file = base_dir / 'CITATION.cff'
 
     if not citation_file.exists():
@@ -88,6 +88,15 @@ def parse_citation_cff():
                 for f, g in zip(authors, givens)
             ]
 
+        # Read last-modified date from VERSION.json (falls back to date-released)
+        version_file = base_dir / 'VERSION.json'
+        if version_file.exists():
+            import json
+            version_data = json.loads(version_file.read_text())
+            data['date-modified'] = version_data.get('date', data.get('date-released', ''))
+        else:
+            data['date-modified'] = data.get('date-released', '')
+
         return data
     except Exception:
         return None
@@ -116,10 +125,15 @@ def build_metadata(cff_data):
         codename = ''
 
     date = cff_data.get('date-released', '')
+    date_modified = cff_data.get('date-modified', date)
     if date:
-        date_pdf = date.replace('-', ':')
+        date_pdf = str(date).replace('-', ':')
     else:
         date_pdf = ''
+    if date_modified:
+        date_mod_pdf = str(date_modified).replace('-', ':')
+    else:
+        date_mod_pdf = date_pdf
 
     doi = cff_data.get('doi', '')
     url = cff_data.get('url', '')
@@ -148,7 +162,10 @@ def build_metadata(cff_data):
 
     if date_pdf:
         metadata['CreationDate'] = f'{date_pdf} 00:00:00'
-        metadata['ModifyDate'] = f'{date_pdf} 00:00:00'
+    # Use actual build time for ModifyDate
+    from datetime import datetime
+    now = datetime.now()
+    metadata['ModifyDate'] = f'{now.strftime("%Y:%m:%d %H:%M:%S")}'
 
     metadata['XMP-dc:Creator'] = author_name
     metadata['XMP-dc:Title'] = title

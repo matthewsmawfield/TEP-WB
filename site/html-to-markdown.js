@@ -25,7 +25,9 @@ class HTMLToMarkdownConverter {
                 .replace(/<(em|i)[^>]*>([\s\S]*?)<\/(em|i)>/gi, '*$2*')
                 .replace(/<code[^>]*>([\s\S]*?)<\/code>/gi, '`$1`')
                 .replace(/<br\s*\/?>/gi, ' ')
-                .replace(/<\/?[a-zA-Z][^>]*>/g, '')
+                .replace(/<sub[^>]*>([\s\S]*?)<\/sub>/gi, '<sub>$1</sub>')
+                .replace(/<sup[^>]*>([\s\S]*?)<\/sup>/gi, '<sup>$1</sup>')
+                .replace(/<\/?(?!sub|sup)[a-zA-Z][^>]*>/g, '')
         )
             .replace(/\s+/g, ' ')
             .trim();
@@ -111,7 +113,9 @@ class HTMLToMarkdownConverter {
         html = html.replace(/<br\s*\/?>/gi, '\n');
         html = html.replace(/<hr\s*\/?>/gi, '\n---\n');
 
-        html = html.replace(/<\/?[a-zA-Z][^>]*>/g, '');
+        html = html.replace(/<sub[^>]*>([\s\S]*?)<\/sub>/gi, '<sub>$1</sub>');
+        html = html.replace(/<sup[^>]*>([\s\S]*?)<\/sup>/gi, '<sup>$1</sup>');
+        html = html.replace(/<\/?(?!sub|sup)[a-zA-Z][^>]*>/g, '');
         html = this.decodeEntities(html);
         html = html.replace(/@@@CODEBLOCK_START:([^@]*)@@@[\r\n]+([\s\S]*?)[\r\n]+@@@CODEBLOCK_END@@@/g, (match, lang, code) => {
             const language = lang.trim();
@@ -152,7 +156,7 @@ class HTMLToMarkdownConverter {
             const author = manifest.author || 'Matthew Lukin Smawfield';
             const version = manifest.version || 'v0.1';
             const firstPublished = manifest.first_published || '19 March 2026';
-            const lastUpdated = manifest.date || '29 April 2026';
+            const lastUpdated = manifest.date || '17 August 2026';
             const doi = manifest.doi || '10.5281/zenodo.19102061';
             
             const header = `# ${title}

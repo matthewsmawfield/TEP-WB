@@ -1,11 +1,7 @@
-v0.4 (Kilifi) — 05 June 2026 — Renamed conformal coupling notation from beta_conf to beta_A to avoid PPN collision
+v0.5 (Kilifi) — 17 August 2026 — Canonical TEP architecture alignment 
 
-v0.3 (Kilifi) - Temporal Shear Recovery Update
-
-- Adopted TEP v0.8 Jakarta framework with Temporal Shear recovery nomenclature.
-- Replaced density-dependent screening terminology with Temporal Topology and Temporal Shear (∇ ln A) throughout.
-- Updated abstract, theory, and discussion sections with new terminology.
-- Added discriminating model comparison table (Table 4.0) and hostile reviewer paragraph.
-- Fixed pipeline order: step_012_newtonian_forward_model now runs before step_008_injection_recovery.
-- Removed deprecated ALPHA_0 constant; canonical coupling now KAPPA_GAL = 9.6e5 mag.
-- Synchronized version metadata and citation files to v0.3; updated publication date.
+- Added weak-field theoretical bridge (Φ_eff, a_eff, v_c² relation) connecting recovered Temporal Shear to the wide-binary velocity enhancement.
+- Aligned terminology with the mature TEP corpus: "screened to active-shear regime," "canonical phenomenological TEP recovery profile," "environmental ordering," and "unsuppressed conformal-sector response."
+- Refined fitted-vs-predicted R_s wording and chameleon comparison to distinguish TEP-specific cross-sector identification from generic screened-scalar morphology.
+- Added covariance-aware significance statements (AR(1), GP) to abstract and renamed "bootstrap" to "parametric-resampling" throughout.
+- Scoped and qualified claims ("0 false positives in 100 null mocks," "within 3% under the stated external-field prescription," "demonstrates that tested variations cannot") and synchronized all citation files.

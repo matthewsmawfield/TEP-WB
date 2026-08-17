@@ -1,6 +1,6 @@
 {
   "name": "tep-wb-site",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Temporal Equivalence Principle: Temporal Shear Recovery in Gaia DR3 Wide Binaries",
   "main": "index.html",
   "scripts": {
