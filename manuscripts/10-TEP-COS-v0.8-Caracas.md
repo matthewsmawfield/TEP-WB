@@ -1,7 +1,7 @@
 # TEP: Suppressed Density Scaling in Globular Cluster Pulsars
 **Matthew Lukin Smawfield**
 Version: v0.8 (Caracas)
-First published: 9 January 2026 · Last updated: 13 August 2026
+First published: 9 January 2026 · Last updated: 18 August 2026
 DOI: 10.5281/zenodo.18165798
 
 ---
@@ -952,7 +952,11 @@ Using verified data from Paulo Freire's GC Pulsar Catalog (Freire GCpsr), radial
 
 The radial structure is heterogeneous across clusters; some show strong internal trends, including significant negative correlations (e.g., M62 and M28), while others are consistent with no trend.
 
-The radial correlation test is therefore treated as a diagnostic rather than a primary detection, because observed Ṗ in globular clusters can be strongly affected by line-of-sight acceleration and internal dynamics.  ## 3.15 Falsification of Conventional Dynamics and Exotic GR Mechanisms  The CMC comparison strongly constrains standard Newtonian dynamical explanations. We evaluate whether combinations of unmodeled but conventional gravitational mechanisms — collectively termed exotic-GR interactions — could recover the observed phenomenology. The analysis shows that the tested conventional alternatives struggle to reproduce the joint amplitude and density-scaling failures while preserving the binary comparator and field-binary null, making TEP the more economical interpretation within the models considered.
+The radial correlation test is therefore treated as a diagnostic rather than a primary detection, because observed Ṗ in globular clusters can be strongly affected by line-of-sight acceleration and internal dynamics.
+
+## 3.15 Falsification of Conventional Dynamics and Exotic GR Mechanisms
+
+The CMC comparison strongly constrains standard Newtonian dynamical explanations. We evaluate whether combinations of unmodeled but conventional gravitational mechanisms — collectively termed exotic-GR interactions — could recover the observed phenomenology. The analysis shows that the tested conventional alternatives struggle to reproduce the joint amplitude and density-scaling failures while preserving the binary comparator and field-binary null, making TEP the more economical interpretation within the models considered.
 
 #### Analysis: `step_41_exotic_physics_quantification.py`
 
