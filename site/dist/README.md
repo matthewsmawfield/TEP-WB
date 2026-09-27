@@ -3,6 +3,16 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19102061.svg)](https://doi.org/10.5281/zenodo.19102061)
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 
+![TEP-WB: Temporal Shear Recovery in Gaia DR3 Wide Binaries](site/public/image.webp)
+
+**Author:** Matthew Lukin Smawfield  
+**Version:** v0.6 (Kilifi)  
+**First published:** 19 March 2026 · **Last updated:** 16 September 2026  
+**Status:** Preprint (Open for Collaboration)  
+**DOI:** [10.5281/zenodo.19102061](https://doi.org/10.5281/zenodo.19102061)  
+**Website:** [https://mlsmawfield.com/tep/wb/](https://mlsmawfield.com/tep/wb/)  
+**Paper Series:** TEP Series: Paper 13 (Wide Binaries)
+
 ## Abstract
 
 The Gaia DR3 catalog of over one million wide binaries opens a precise window onto gravity in the weak-field regime ($a \lesssim 10^{-10}\,\mathrm{m\,s^{-2}}$), yet whether the observed velocity excess reflects modified gravity or unresolved systematics remains contested.
@@ -21,16 +31,6 @@ From 341,315 high-purity systems, the analysis identifies a screening transition
 The signal also shows the environmental ordering required by TEP. With a non-circular metallicity guardrail that uses a conservative external $\beta_{\rm MLR}$ prior unless independent spectroscopic metallicities are cached, the lower-density high-$|Z|$ population transitions at smaller radius than the higher-density midplane ($R_s = 4{,}662 \pm 196$ versus $7{,}131 \pm 1{,}341$ AU), confirmed by a solar-track control ($R_s = 4{,}145 \pm 276$ versus $6{,}856 \pm 920$ AU; permutation $p < 10^{-4}$ for the full sample and $p < 10^{-3}$ for the solar track). Scrambling tests and phase-mixed Newtonian orbital forward models fail to reproduce the observed screening preference. The wide-binary anomaly is therefore not a generic low-acceleration excess but a structured, environmentally modulated screening transition—one whose morphology, onset scale, and environmental ordering are quantitatively consistent with the conformal scalar field of TEP and are not reproduced by the Newtonian orbital-projection or MOND/EFE parameterizations tested here.
 
 *Keywords:* Temporal Equivalence Principle – wide binaries – Gaia DR3 – weak-field gravity – Temporal Shear recovery – environmental transition morphology – Temporal Topology – Temporal Shear – modified gravity – MOND
-
-![TEP-WB Wide Binary Screening](site/public/image.webp)
-
-**Author:** Matthew Lukin Smawfield  
-**Version:** v0.5 (Kilifi)  
-**Date:** First published: 19 March 2026 · Last updated: 17 August 2026
-**Status:** Preprint (Open for Collaboration)  
-**DOI:** [10.5281/zenodo.19102061](https://doi.org/10.5281/zenodo.19102061)  
-**Website:** [https://mlsmawfield.com/tep/wb/](https://mlsmawfield.com/tep/wb/)  
-**Paper Series:** TEP Series: Paper 13 (Wide Binaries)
 
 ## Overview
 
@@ -60,7 +60,7 @@ The signal also shows the environmental ordering required by TEP. With a non-cir
 | **Paper 11** | [TEP-H0](https://github.com/matthewsmawfield/TEP-H0) | The Cepheid Bias: Resolving the Hubble Tension | [10.5281/zenodo.18209702](https://doi.org/10.5281/zenodo.18209702) |
 | **Paper 12** | [TEP-JWST](https://github.com/matthewsmawfield/TEP-JWST) | The Temporal Equivalence Principle: A Unified Resolution to the JWST High-Redshift Anomalies | [10.5281/zenodo.19000827](https://doi.org/10.5281/zenodo.19000827) |
 | **Paper 13** | **TEP-WB** (This repo) | The Temporal Equivalence Principle: Temporal Shear Recovery in Gaia DR3 Wide Binaries | [10.5281/zenodo.19102061](https://doi.org/10.5281/zenodo.19102061) |
-| **Paper 15** | [TEP-EFA](https://github.com/matthewsmawfield/TEP-EFA) | Temporal Equivalence Principle: Temporal Shear in the Earth Flyby Anomaly | [10.5281/zenodo.19454863](https://doi.org/10.5281/zenodo.19454863) |
+| **Paper 15** | [TEP-EFA](https://github.com/matthewsmawfield/TEP-EFA) | Temporal Equivalence Principle: Temporal Shear in the Earth Flyby Anomaly | [10.5281/zenodo.19454862](https://doi.org/10.5281/zenodo.19454862) |
 | **Paper 16** | [TEP-J0437](https://github.com/matthewsmawfield/TEP-J0437) | Synchronization Holonomy in Pulsar Scintillation | [10.5281/zenodo.19454620](https://doi.org/10.5281/zenodo.19454620) |
 | **Paper 17** | [TEP-LLR](https://github.com/matthewsmawfield/TEP-LLR) | Lunar Laser Ranging and the Nordtvedt Effect | [10.5281/zenodo.19446029](https://doi.org/10.5281/zenodo.19446029) |
 
@@ -100,7 +100,7 @@ To reproduce the analysis and generate the manuscript:
    ```bash
    npm run build:markdown --prefix site
    ```
-   The final manuscript will be available at `13-TEP-WB-v0.5-Kilifi.md`.
+   The final manuscript will be available at `13-TEP-WB-v0.6-Kilifi.md`.
 
 ## Citation
 
@@ -111,7 +111,7 @@ To reproduce the analysis and generate the manuscript:
   journal={Zenodo},
   year={2026},
   doi={10.5281/zenodo.19102061},
-  note={Preprint v0.5 (Kilifi)}
+  note={Preprint v0.6 (Kilifi)}
 }
 ```
 

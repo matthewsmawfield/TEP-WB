@@ -214,8 +214,13 @@ def triple_forward_model(df, observed_profile):
             a_draws = 10 ** rng.uniform(np.log10(3), np.log10(50), size=n_triple)
             mb, vf = compute_triple_boosts(q_draws, a_draws, s_bin)
             vt_base = rng.choice(inner_vtilde, size=n_triple, replace=True)
-            signs = rng.choice([-1.0, 1.0], size=n_triple)
-            vt_triple = vt_base * mb + signs * vf * vt_base
+            # Vector-addition kinematics: the photocentric reflex velocity is a
+            # vector added to the orbital tangential velocity, so the observed
+            # speed is |v_orb + v_phot|, positive-definite with random relative
+            # phase psi — never a signed linear kick on the magnitude.
+            psi_kick = rng.uniform(0.0, 2.0 * np.pi, size=n_triple)
+            vt_triple = np.sqrt((mb * vt_base) ** 2 + vf ** 2
+                                + 2.0 * mb * vt_base * vf * np.cos(psi_kick))
 
             vt_all = np.concatenate([vt_genuine, vt_triple])
             predicted_medians[i] = float(np.median(vt_all))

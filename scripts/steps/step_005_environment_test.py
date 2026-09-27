@@ -588,6 +588,190 @@ def perform_environment_test():
         boot_ordering_frac = np.nan
         print_status("Insufficient bootstrap convergence for joint fit", "WARNING")
 
+    # 1e. Mass-stratified transition: measure the R_s(M) exponent.
+    # The canonical operator predicts R_s = sqrt(GM/g_t) ~ M^{1/2}; the data
+    # supply an independent consistency check. Three mass bins are defined by
+    # mass_total terciles; each bin gets its own inner-Keplerian baseline and
+    # a binned profile; a joint fit shares one saturation amplitude across
+    # mass bins (the same universal-plateau prescription as the |Z| fit) and
+    # returns a separate R_s per bin. The exponent n in R_s ~ M^n is fitted
+    # on the log scale and re-fitted inside each bootstrap resample.
+    print_status(
+        "Mass-stratified transition: measuring the R_s(M) exponent under shared α_sat...",
+        "PROCESS",
+    )
+    mass_scaling_rows = []
+    if "mass_total" in df.columns and np.isfinite(df["mass_total"]).sum() > 0:
+        mt = df["mass_total"].values
+        q_lo, q_hi = np.nanquantile(mt, [1.0 / 3.0, 2.0 / 3.0])
+        mass_masks = [
+            ("low_mass", mt <= q_lo),
+            ("mid_mass", (mt > q_lo) & (mt <= q_hi)),
+            ("high_mass", mt > q_hi),
+        ]
+        mass_profs, mass_medians, mass_labels = [], [], []
+        for label, mmask in mass_masks:
+            sub = df[mmask]
+            base = sub.loc[sub["sep_AU"] < 500, "v_tilde"].median()
+            if not np.isfinite(base) or base <= 0:
+                continue
+            p = get_binned_profile(sub, np.ones(len(sub), dtype=bool), base)
+            if len(p) < 6:
+                continue
+            mass_profs.append(p)
+            mass_medians.append(float(np.nanmedian(sub["mass_total"])))
+            mass_labels.append(label)
+        n_mb = len(mass_profs)
+        print_status(
+            f"  Mass tercile edges: {q_lo:.2f}, {q_hi:.2f} M_sun; "
+            f"bin medians: {[f'{m:.2f}' for m in mass_medians]}",
+            "INFO",
+        )
+
+        if n_mb >= 2:
+            xs = [np.asarray(p["sep_AU"]) for p in mass_profs]
+            ys = [np.asarray(p["v_tilde_norm"]) for p in mass_profs]
+            es = [np.asarray(p["sem"]) for p in mass_profs]
+
+            def _fit_mass_joint(xx, yy, ee, x0=None):
+                def _obj(params):
+                    a = params[0]
+                    c = 0.0
+                    for i in range(n_mb):
+                        m = 1.0 + a * (1.0 - np.exp(-xx[i] / params[1 + i]))
+                        c += np.sum(((yy[i] - m) / ee[i]) ** 2)
+                    return c
+                res = scipy_minimize(
+                    _obj,
+                    x0=x0 or [0.35] + [3000.0] * n_mb,
+                    bounds=[(0.01, 0.8)] + [(100.0, 50000.0)] * n_mb,
+                    method="L-BFGS-B",
+                )
+                return res
+
+            res_mass = _fit_mass_joint(xs, ys, es)
+            alpha_mass = float(res_mass.x[0])
+            rs_mass = [float(res_mass.x[1 + i]) for i in range(n_mb)]
+            chi2_mass = float(res_mass.fun)
+
+            # Power-law exponent on the log scale (unweighted slope; bootstrap
+            # supplies the uncertainty)
+            lm = np.log(np.asarray(mass_medians))
+            lr = np.log(np.asarray(rs_mass))
+            n_slope = float(np.polyfit(lm, lr, 1)[0])
+
+            # Bootstrap: refit joint model and exponent
+            rng_mass = np.random.default_rng(BOOTSTRAP_SEED + 77)
+            boot_rs_mass = {i: [] for i in range(n_mb)}
+            boot_alpha_mass, boot_slope = [], []
+            for _ in range(200):
+                xb = [
+                    xs[i][rng_mass.choice(len(xs[i]), len(xs[i]), replace=True)]
+                    for i in range(n_mb)
+                ]
+                yb = [
+                    ys[i][rng_mass.choice(len(ys[i]), len(ys[i]), replace=True)]
+                    for i in range(n_mb)
+                ]
+                eb = [
+                    es[i][rng_mass.choice(len(es[i]), len(es[i]), replace=True)]
+                    for i in range(n_mb)
+                ]
+                try:
+                    br = _fit_mass_joint(
+                        xb, yb, eb, x0=list(res_mass.x)
+                    )
+                    boot_alpha_mass.append(br.x[0])
+                    for i in range(n_mb):
+                        boot_rs_mass[i].append(br.x[1 + i])
+                    boot_slope.append(
+                        float(np.polyfit(lm, np.log(br.x[1:]), 1)[0])
+                    )
+                except (RuntimeError, ValueError, np.linalg.LinAlgError):
+                    pass
+
+            rs_mass_err = [
+                float(np.std(boot_rs_mass[i])) if len(boot_rs_mass[i]) > 5 else np.nan
+                for i in range(n_mb)
+            ]
+            alpha_mass_err = (
+                float(np.std(boot_alpha_mass)) if len(boot_alpha_mass) > 5 else np.nan
+            )
+            # Robust summaries of the exponent distribution: the bootstrap
+            # spread is heavy-tailed, so report median, 16-84 range, and the
+            # fraction of resamples with positive / strictly monotone scaling.
+            bs = np.asarray(boot_slope)
+            n_slope_med = float(np.median(bs)) if len(bs) else np.nan
+            n_slope_p16, n_slope_p84 = (
+                (float(v) for v in np.percentile(bs, [16, 84]))
+                if len(bs)
+                else (np.nan, np.nan)
+            )
+            n_slope_frac_pos = float(np.mean(bs > 0)) if len(bs) else np.nan
+            n_slope_std = float(np.std(bs)) if len(bs) > 5 else np.nan
+            # Strictly monotone resamples: R_s increasing across all mass bins
+            mono_frac = np.nan
+            if len(boot_rs_mass[0]) > 5:
+                rs_arr = np.array(
+                    [boot_rs_mass[i] for i in range(n_mb)]
+                )
+                n_common = min(rs_arr.shape[1], len(bs))
+                mono_frac = float(
+                    np.mean(np.all(np.diff(rs_arr[:, :n_common], axis=0) > 0, axis=0))
+                )
+
+            print_status(
+                f"  Joint shared-α fit: α = {alpha_mass:.3f} ± {alpha_mass_err:.3f}, "
+                f"χ² = {chi2_mass:.1f}",
+                "RESULT",
+            )
+            for i, lab in enumerate(mass_labels):
+                print_status(
+                    f"    {lab} (median {mass_medians[i]:.2f} M_sun): "
+                    f"R_s = {rs_mass[i]:.0f} ± {rs_mass_err[i]:.0f} AU "
+                    f"({len(xs[i])} profile bins)",
+                    "RESULT",
+                )
+            print_status(
+                f"  Mass-scaling exponent: R_s ∝ M^{{{n_slope:.2f}}} "
+                f"(bootstrap median {n_slope_med:.2f}, "
+                f"16-84% [{n_slope_p16:.2f}, {n_slope_p84:.2f}], "
+                f"{n_slope_frac_pos * 100:.0f}% positive, "
+                f"{mono_frac * 100 if np.isfinite(mono_frac) else np.nan:.0f}% strictly monotone) "
+                f"— canonical operator predicts n = 1/2",
+                "RESULT",
+            )
+
+            for i, lab in enumerate(mass_labels):
+                mass_scaling_rows.append(
+                    {
+                        "mass_bin": lab,
+                        "n_binaries": int(np.sum(mass_masks[i][1])),
+                        "median_mass_msun": mass_medians[i],
+                        "n_profile_bins": int(len(xs[i])),
+                        "rs_au": rs_mass[i],
+                        "rs_err_au": rs_mass_err[i],
+                        "joint_alpha": alpha_mass,
+                        "joint_alpha_err": alpha_mass_err,
+                        "joint_chi2": chi2_mass,
+                        "mass_exponent_n": n_slope,
+                        "mass_exponent_n_bootstrap_median": n_slope_med,
+                        "mass_exponent_n_p16": n_slope_p16,
+                        "mass_exponent_n_p84": n_slope_p84,
+                        "mass_exponent_frac_positive": n_slope_frac_pos,
+                        "mass_exponent_frac_monotone": mono_frac,
+                        "n_bootstrap": len(boot_slope),
+                    }
+                )
+        else:
+            print_status(
+                "Insufficient mass-stratified profiles for the joint fit", "WARNING"
+            )
+    else:
+        print_status("mass_total column not found — skipping mass stratification", "WARNING")
+
+    mass_scaling_df = pd.DataFrame(mass_scaling_rows)
+
     # 1d. Fixed-alpha sensitivity sweep
     print_status(
         "Sensitivity sweep: varying fixed α_sat to test ordering robustness...",
@@ -940,7 +1124,7 @@ def perform_environment_test():
         rs_grid_n1,
         "k-",
         linewidth=1.2,
-        label="Scaling benchmark ($n=1$)",
+        label="Scaling benchmark ($p=1/2$)",
     )
     # Data points from joint fit
     ax_cham.errorbar(
@@ -1674,6 +1858,11 @@ def perform_environment_test():
     if alpha_sweep_results:
         pd.DataFrame(alpha_sweep_results).to_csv(
             out_dir / "005_environment_alpha_sweep.csv", index=False
+        )
+
+    if len(mass_scaling_df) > 0:
+        mass_scaling_df.to_csv(
+            out_dir / "005_mass_stratified_transition.csv", index=False
         )
 
 

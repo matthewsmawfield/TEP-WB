@@ -1,4 +1,4 @@
-v0.5 (Kilifi) — 17 August 2026 — Canonical TEP architecture alignment 
+v0.6 (Kilifi) — 16 September 2026 — Canonical TEP architecture alignment
 
 - Added weak-field theoretical bridge (Φ_eff, a_eff, v_c² relation) connecting recovered Temporal Shear to the wide-binary velocity enhancement.
 - Aligned terminology with the mature TEP corpus: "screened to active-shear regime," "canonical phenomenological TEP recovery profile," "environmental ordering," and "unsuppressed conformal-sector response."

@@ -16,7 +16,7 @@ abstract: 'The Gaia DR3 wide-binary catalog tests whether weak-field velocity ex
   '
 title: 'Temporal Equivalence Principle: Temporal Shear Recovery in Gaia DR3 Wide Binaries'
 type: article
-version: v0.5 (Kilifi)
+version: v0.6 (Kilifi)
 date-released: 2026-03-19
 doi: 10.5281/zenodo.19102061
 url: https://mlsmawfield.com/tep/wb
@@ -58,4 +58,4 @@ preferred-citation:
   journal: Zenodo
   doi: 10.5281/zenodo.19102061
   url: https://doi.org/10.5281/zenodo.19102061
-  notes: Preprint v0.5 (Kilifi)
+  notes: Preprint v0.6 (Kilifi)

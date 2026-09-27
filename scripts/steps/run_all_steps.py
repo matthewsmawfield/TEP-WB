@@ -48,7 +48,9 @@ def main():
         "step_011_mond_comparison.py",
         "step_012_newtonian_forward_model.py",
         "step_008_injection_recovery.py",
-        "step_013_claim_consistency_audit.py"
+        "step_013_claim_consistency_audit.py",
+        "step_014_shell_consistency.py",
+        "step_015_derived_operator_forward.py"
     ]
     
     for step in steps:

@@ -8,7 +8,7 @@ statistical analysis, model comparison, and systematic uncertainty quantificatio
 This script:
 1. Bins kinematic data logarithmically by physical separation
 2. Calculates median dimensionless velocities with bootstrap confidence intervals
-3. Fits multiple phenomenological models (TEP exponential, sigmoid, double-exponential)
+3. Fits multiple phenomenological models (TEP exponential, sigmoid, double-exponential, thin-shell)
 4. Performs model comparison via information criteria
 5. Conducts runs test for residual randomness
 6. Computes systematic uncertainty budget
@@ -71,6 +71,23 @@ def double_exp_model(s, r_s, alpha, beta):
     v_tilde = 1 + alpha * (1 - exp(-(s/r_s)^beta))
     """
     return 1.0 + alpha * (1.0 - np.exp(-((s / r_s) ** beta)))
+
+
+def thin_shell_model(s, r_s, m_bg, alpha):
+    """
+    Thin-shell exterior profile (standard chameleon form).
+    Unscreening fraction f(s) = 1 - (R_s/s) * exp(-m_bg*(s - R_s)) for s >= R_s,
+    and f = 0 inside the shell radius (fully screened interior).
+    v_tilde = 1 + alpha * f(s)
+    """
+    s = np.asarray(s, dtype=float)
+    f = np.zeros_like(s)
+    outside = s > r_s
+    f[outside] = 1.0 - (r_s / s[outside]) * np.exp(
+        -m_bg * (s[outside] - r_s)
+    )
+    f = np.clip(f, 0.0, 1.0)
+    return 1.0 + alpha * f
 
 
 def information_criteria(chi2, n_points, n_params):
@@ -283,9 +300,35 @@ def perform_screening_test():
         print_status("Double-exponential fit did not converge", "WARNING")
         dbl_exp_result = {"success": False, "chi2": np.inf}
 
-    # Model 4: Mass-convolved TEP (physically motivated broadening)
+    # Model 4: Thin-Shell (standard chameleon exterior profile)
+    # f(s) = 1 - (R_s/s) exp(-m_bg (s - R_s)) — the thin-shell form stated
+    # in the manuscript, tested directly rather than via the sigmoid proxy.
+    print_status("Fitting Thin-Shell Model...", "PROCESS")
+    thin_shell_result = fit_model(
+        thin_shell_model,
+        s_data,
+        v_data,
+        v_err,
+        p0=[3000.0, 1.0e-3, 0.4],
+        bounds=([100.0, 1.0e-7, 0.0], [50000.0, 0.1, 0.8]),
+    )
+
+    if thin_shell_result["success"]:
+        delta_chi2_ts = thin_shell_result["chi2"] - tep_result["chi2"]
+        print_status(
+            f"Thin-Shell Fit: Δχ² = {delta_chi2_ts:+.1f} vs TEP, "
+            f"R_s = {thin_shell_result['params'][0]:.1f} AU, "
+            f"m_bg = {thin_shell_result['params'][1]:.4f} AU^-1",
+            "INFO",
+        )
+    else:
+        print_status("Thin-shell fit did not converge", "WARNING")
+        thin_shell_result = {"success": False, "chi2": np.inf}
+
+    # Model 5: Mass-convolved TEP (physically motivated broadening)
     # v(s) = 1 + alpha * <1 - exp(-s/R_s(M))>_M
-    # where R_s(M) = R_s_ref * (M/M_ref)^(1/3) as TEP predicts.
+    # where R_s(M) = R_s_ref * (M/M_ref)^(1/2) — the master-action derived
+    # radius law R_s = sqrt(GM/g_t) (Smawfield 2025a, §7).
     # Same 2 free parameters (alpha, R_s_ref) as single-scale TEP.
     print_status("Fitting Mass-Convolved TEP Model...", "PROCESS")
 
@@ -308,7 +351,7 @@ def perform_screening_test():
                 if len(bm) == 0:
                     v[i] = 1.0 + alpha * (1.0 - np.exp(-s_arr[i] / r_s_ref))
                 else:
-                    r_s_vals = r_s_ref * (bm / M_ref) ** (1.0 / 3.0)
+                    r_s_vals = r_s_ref * (bm / M_ref) ** (1.0 / 2.0)
                     v[i] = 1.0 + alpha * np.mean(1.0 - np.exp(-s_arr[i] / r_s_vals))
             return v
 
@@ -967,23 +1010,36 @@ def perform_screening_test():
     # Model comparison table
     model_comparison = pd.DataFrame(
         {
-            "model": ["TEP_Exponential", "Sigmoid", "Double_Exponential", "Mass_Convolved_TEP"],
+            "model": [
+                "TEP_Exponential",
+                "Sigmoid",
+                "Double_Exponential",
+                "Thin_Shell",
+                "Mass_Convolved_TEP",
+            ],
             "r_s_or_s_trans": [
                 r_s_tep,
                 sigmoid_result["params"][0] if sigmoid_result["success"] else np.nan,
                 dbl_exp_result["params"][0] if dbl_exp_result["success"] else np.nan,
+                thin_shell_result["params"][0]
+                if thin_shell_result["success"]
+                else np.nan,
                 mass_conv_result["params"][1] if mass_conv_result["success"] else np.nan,
             ],
             "alpha": [
                 alpha_tep,
                 sigmoid_result["params"][2] if sigmoid_result["success"] else np.nan,
                 dbl_exp_result["params"][1] if dbl_exp_result["success"] else np.nan,
+                thin_shell_result["params"][2]
+                if thin_shell_result["success"]
+                else np.nan,
                 mass_conv_result["params"][0] if mass_conv_result["success"] else np.nan,
             ],
             "chi2": [
                 tep_result["chi2"],
                 sigmoid_result["chi2"] if sigmoid_result["success"] else np.nan,
                 dbl_exp_result["chi2"] if dbl_exp_result["success"] else np.nan,
+                thin_shell_result["chi2"] if thin_shell_result["success"] else np.nan,
                 mass_conv_result["chi2"] if mass_conv_result["success"] else np.nan,
             ],
             "delta_chi2_vs_tep": [
@@ -994,6 +1050,9 @@ def perform_screening_test():
                 dbl_exp_result["chi2"] - tep_result["chi2"]
                 if dbl_exp_result["success"]
                 else np.nan,
+                thin_shell_result["chi2"] - tep_result["chi2"]
+                if thin_shell_result["success"]
+                else np.nan,
                 mass_conv_result["chi2"] - tep_result["chi2"]
                 if mass_conv_result["success"]
                 else np.nan,
@@ -1002,6 +1061,7 @@ def perform_screening_test():
                 True,
                 sigmoid_result["success"],
                 dbl_exp_result["success"],
+                thin_shell_result["success"],
                 mass_conv_result["success"],
             ],
         }

@@ -6,8 +6,8 @@
 ![TEP-WB: Temporal Shear Recovery in Gaia DR3 Wide Binaries](site/public/image.webp)
 
 **Author:** Matthew Lukin Smawfield  
-**Version:** v0.5 (Kilifi)  
-**Date:** First published: 19 March 2026 · Last updated: 17 August 2026  
+**Version:** v0.6 (Kilifi)  
+**First published:** 19 March 2026 · **Last updated:** 16 September 2026  
 **Status:** Preprint (Open for Collaboration)  
 **DOI:** [10.5281/zenodo.19102061](https://doi.org/10.5281/zenodo.19102061)  
 **Website:** [https://mlsmawfield.com/tep/wb/](https://mlsmawfield.com/tep/wb/)  
@@ -60,7 +60,7 @@ The signal also shows the environmental ordering required by TEP. With a non-cir
 | **Paper 11** | [TEP-H0](https://github.com/matthewsmawfield/TEP-H0) | The Cepheid Bias: Resolving the Hubble Tension | [10.5281/zenodo.18209702](https://doi.org/10.5281/zenodo.18209702) |
 | **Paper 12** | [TEP-JWST](https://github.com/matthewsmawfield/TEP-JWST) | The Temporal Equivalence Principle: A Unified Resolution to the JWST High-Redshift Anomalies | [10.5281/zenodo.19000827](https://doi.org/10.5281/zenodo.19000827) |
 | **Paper 13** | **TEP-WB** (This repo) | The Temporal Equivalence Principle: Temporal Shear Recovery in Gaia DR3 Wide Binaries | [10.5281/zenodo.19102061](https://doi.org/10.5281/zenodo.19102061) |
-| **Paper 15** | [TEP-EFA](https://github.com/matthewsmawfield/TEP-EFA) | Temporal Equivalence Principle: Temporal Shear in the Earth Flyby Anomaly | [10.5281/zenodo.19454863](https://doi.org/10.5281/zenodo.19454863) |
+| **Paper 15** | [TEP-EFA](https://github.com/matthewsmawfield/TEP-EFA) | Temporal Equivalence Principle: Temporal Shear in the Earth Flyby Anomaly | [10.5281/zenodo.19454862](https://doi.org/10.5281/zenodo.19454862) |
 | **Paper 16** | [TEP-J0437](https://github.com/matthewsmawfield/TEP-J0437) | Synchronization Holonomy in Pulsar Scintillation | [10.5281/zenodo.19454620](https://doi.org/10.5281/zenodo.19454620) |
 | **Paper 17** | [TEP-LLR](https://github.com/matthewsmawfield/TEP-LLR) | Lunar Laser Ranging and the Nordtvedt Effect | [10.5281/zenodo.19446029](https://doi.org/10.5281/zenodo.19446029) |
 
@@ -100,7 +100,7 @@ To reproduce the analysis and generate the manuscript:
    ```bash
    npm run build:markdown --prefix site
    ```
-   The final manuscript will be available at `13-TEP-WB-v0.5-Kilifi.md`.
+   The final manuscript will be available at `13-TEP-WB-v0.6-Kilifi.md`.
 
 ## Citation
 
@@ -111,7 +111,7 @@ To reproduce the analysis and generate the manuscript:
   journal={Zenodo},
   year={2026},
   doi={10.5281/zenodo.19102061},
-  note={Preprint v0.5 (Kilifi)}
+  note={Preprint v0.6 (Kilifi)}
 }
 ```
 

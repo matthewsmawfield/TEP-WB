@@ -43,6 +43,8 @@ TEP-WB/
 │   │   ├── step_011_mond_comparison.py
 │   │   ├── step_012_newtonian_forward_model.py
 │   │   ├── step_013_claim_consistency_audit.py
+│   │   ├── step_014_shell_consistency.py
+│   │   ├── step_015_derived_operator_forward.py
 │   │   └── run_all_steps.py       # Master pipeline runner
 │   └── utils/                     # Shared analysis utilities
 ├── site/
@@ -133,7 +135,7 @@ npm run build:markdown --prefix site
         </tr>
         <tr>
             <td>Runtime</td>
-            <td colspan="2">~2-4 hours (full 13-step pipeline)</td>
+            <td colspan="2">~2-4 hours (full 14-step pipeline)</td>
             <td>~3 hours (M4 Pro)</td>
         </tr>
     </table>
@@ -158,7 +160,7 @@ npm run build:markdown --prefix site
 
     <h5>Step 003: Screening Test</h5>
     <ul>
-        <li><strong>step_003_screening_test.py</strong> &mdash; Bin systems in $\log s$, take the median $\tilde v$ in each bin with parametric-resampling 68\% intervals, and fit phenomenological screening models (TEP exponential, sigmoid, double-exponential, flat Newtonian, constant boost). Performs a Wald&ndash;Wolfowitz runs test, computes residual lag-1 autocorrelation and Durbin&ndash;Watson, executes covariance-aware refits (AR(1) GLS and a Gaussian Process in $\log_{10} s$), and runs jackknife bin-drop stability.</li>
+        <li><strong>step_003_screening_test.py</strong> &mdash; Bin systems in $\log s$, take the median $\tilde v$ in each bin with parametric-resampling 68\% intervals, and fit phenomenological screening models (TEP exponential, sigmoid, thin-shell, double-exponential, flat Newtonian, constant boost). Performs a Wald&ndash;Wolfowitz runs test, computes residual lag-1 autocorrelation and Durbin&ndash;Watson, executes covariance-aware refits (AR(1) GLS and a Gaussian Process in $\log_{10} s$), and runs jackknife bin-drop stability.</li>
     </ul>
 
     <h5>Step 004: Sample Characterization</h5>
@@ -168,7 +170,7 @@ npm run build:markdown --prefix site
 
     <h5>Step 005: Environmental Test</h5>
     <ul>
-        <li><strong>step_005_environment_test.py</strong> &mdash; Stratify the sample by Galactocentric height $|Z|$ into a midplane subsample ($|Z| &lt; 100$ pc) and a high-$|Z|$ subsample ($|Z| &gt; 150$ pc), fit the screening model with $\alpha_{\rm sat}$ fixed to remove the amplitude&ndash;scale degeneracy, and compare the resulting $R_s$ values. Includes a solar-track control (zero metallicity correction), a joint profile-likelihood fit with shared $\alpha_{\rm sat}$, permutation tests, and a chameleon-completion benchmark that infers the potential index $n$ from the observed $R_s$ ratio (chameleon is treated here as one of several candidate microscopic completions of TEP screening, not as the defining mechanism; Smawfield 2025a, &sect;A4).</li>
+        <li><strong>step_005_environment_test.py</strong> &mdash; Stratify the sample by Galactocentric height $|Z|$ into a midplane subsample ($|Z| &lt; 100$ pc) and a high-$|Z|$ subsample ($|Z| &gt; 150$ pc), fit the screening model with $\alpha_{\rm sat}$ fixed to remove the amplitude&ndash;scale degeneracy, and compare the resulting $R_s$ values. Includes a solar-track control (zero metallicity correction), a joint profile-likelihood fit with shared $\alpha_{\rm sat}$, permutation tests, and an empirical density-scaling benchmark that infers the exponent $p$ from the observed $R_s$ ratio (the scaling is treated here as phenomenology, not as a claimed microscopic completion; Smawfield 2025a, &sect;A4).</li>
     </ul>
 
     <h5>Step 006: Audit Analysis</h5>
@@ -188,7 +190,7 @@ npm run build:markdown --prefix site
 
     <h5>Step 009: Advanced Diagnostics</h5>
     <ul>
-        <li><strong>step_009_advanced_diagnostics.py</strong> &mdash; Three diagnostics: (i) a triple-contamination forward model that tests whether residual unresolved hierarchies can reproduce the observed outer $\tilde v$; (ii) a quantitative self-screening fit $\alpha_{\rm sat}(M) = \alpha_0 \exp(-M/M_{\rm screen})$ across the demographic mass splits; (iii) a fine $|Z|$ stratification into 5 equal-count height bins, refining the inferred chameleon-completion index $n$.</li>
+        <li><strong>step_009_advanced_diagnostics.py</strong> &mdash; Three diagnostics: (i) a triple-contamination forward model that tests whether residual unresolved hierarchies can reproduce the observed outer $\tilde v$; (ii) a quantitative self-screening fit $\alpha_{\rm sat}(M) = \alpha_0 \exp(-M/M_{\rm screen})$ across the demographic mass splits; (iii) a fine $|Z|$ stratification into 5 equal-count height bins, refining the inferred density-scaling exponent $p$.</li>
     </ul>
 
     <h5>Step 010: Referee Hardening</h5>
@@ -209,6 +211,12 @@ npm run build:markdown --prefix site
     <h5>Step 013: Claim Consistency Audit</h5>
     <ul>
         <li><strong>step_013_claim_consistency_audit.py</strong> &mdash; Cross-check manuscript source and generated markdown against the latest pipeline outputs, including non-circular metallicity calibration, MOND comparison values, transition-model statistics, Newtonian forward-model results, and injection-recovery false-positive rates.</li>
+    </ul>
+
+    <h5>Step 014: Screening-Shell Consistency Map</h5>
+    <ul>
+        <li><strong>step_014_shell_consistency.py</strong> &mdash; Evaluate the resolved nested two-body screening operator $\mathcal R(s) = \mathcal S_\Sigma(X_{\rm env})^2\,y(s)$, where $y$ is the exact flux-conserving profile $y[1+y^2(r_*/r)^4]=1$, $r_*=\sqrt{GM/g_t}$ is the derived shell radius with $g_t = cH_0/(2\beta_A^2)$, and $X_{\rm env}$ is the embedding ambient of the hierarchy level above the pair — the dominant member's field for hierarchical systems (giving $\mathcal R \to y^3 \sim s^4$ deep inside the shell) and the Galactic field for comparable-mass binaries (giving the $\sim s^{4/3}$ transition) — across the separation ladder (Cassini conjunction, 1 AU, Saturn, Earth&ndash;Moon, wide-binary transition, Oort cloud) and the environmental operator $\mathcal S_\Sigma(\mathcal E) = [1+(g/g_t)^2]^{-1}$ at benchmark field strengths. Verifies that all Solar-System constraints sit deep inside the solar screening shell while the wide-binary companion samples the shell boundary, and computes the amplitude ledger relating the observed $\alpha_{\rm sat}$ plateau to the ambient-floor-limited partial recovery.</li>
+        <li><strong>step_015_derived_operator_forward.py</strong> &mdash; Forward-model test of the derived operator against the real 341,315-binary catalog: each binary's projected separation is deprojected, the per-binary shell radius follows the derived $r_* = \sqrt{GM/g_t}$ law with lognormal scatter, the Galactic ambient floor carries environmental scatter, and unresolved-triple contamination uses the corrected vector-addition kinematics of steps 009/010. The binned median profile is compared against the 19-bin measurement across a family of candidate transition profiles — the power-law $[1+(R_s/r)^k]^{-1}$ family over $k = 0.8\ldots4$ and the exact flux-conserving profile $y(s)$ of the resolved operator — yielding $\chi^2_{\rm red}$ for each: the data select transition-region slopes near the derived $4/3$ (the exact $y$ profile reaches $\chi^2_{\rm red} \approx 8.4$, versus $18.3$ for the steep $k = 4$ form) and an ambient floor $S_{\rm env} \approx 0.45$ consistent with the squared Galactic vertex factor $q_{\rm GAL}^2 \approx 0.43$.</li>
     </ul>
 
     <p>

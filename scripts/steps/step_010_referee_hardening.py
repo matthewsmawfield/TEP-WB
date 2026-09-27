@@ -701,7 +701,12 @@ def pittordis_triple_model(df, observed_profile):
             # Triple contamination with Pittordis distributions
             mb, vf, signs = pittordis_triple_boost(n_triple, s_bin, rng)
             vt_base = rng.choice(inner_vtilde, size=n_triple, replace=True)
-            vt_triple = vt_base * mb + signs * vf * vt_base
+            # Vector-addition kinematics: observed speed is |v_orb + v_phot|,
+            # positive-definite with random relative phase psi — not a signed
+            # linear kick on the positive-definite v_tilde magnitude.
+            psi_kick = rng.uniform(0.0, 2.0 * np.pi, size=n_triple)
+            vt_triple = np.sqrt((mb * vt_base) ** 2 + vf ** 2
+                                + 2.0 * mb * vt_base * vf * np.cos(psi_kick))
 
             vt_all = np.concatenate([vt_genuine, vt_triple])
             predicted_medians[i] = float(np.median(vt_all))
