@@ -4,5 +4,6 @@
   "description": "Paper 13: Temporal Equivalence Principle: Temporal Shear Recovery in Gaia DR3 Wide Binaries",
   "date": "2026-09-16",
   "previous_version": "0.5",
-  "paper": "13"
+  "paper": "13",
+  "doi": "10.5281/zenodo.19102061"
 }

@@ -185,8 +185,8 @@ def run_claim_consistency_audit():
     add_check(
         rows,
         "version_txt_current",
-        "v0.5" in version_txt and "v0.2" not in version_txt,
-        "version.txt should reflect current release (v0.5)",
+        "v0.6" in version_txt and "v0.5" not in version_txt.split("\n")[0],
+        "version.txt should reflect current release (v0.6)",
     )
 
     add_check(
@@ -206,29 +206,29 @@ def run_claim_consistency_audit():
     add_check(
         rows,
         "root_citation_cff_version",
-        "version: v0.5" in root_cff,
-        "root CITATION.cff should have version v0.5",
+        "version: v0.6" in root_cff,
+        "root CITATION.cff should have version v0.6",
     )
 
     add_check(
         rows,
         "site_citation_cff_version",
-        "version: v0.5" in site_cff,
-        "site CITATION.cff should have version v0.5",
+        "version: v0.6" in site_cff,
+        "site CITATION.cff should have version v0.6",
     )
 
     add_check(
         rows,
         "version_json_current",
-        '"version": "0.5"' in version_json,
-        "VERSION.json should have version 0.5",
+        '"version": "0.6"' in version_json,
+        "VERSION.json should have version 0.6",
     )
 
     add_check(
         rows,
         "manifest_json_current",
-        '"version": "v0.5' in manifest_json,
-        "site/manifest.json should have version v0.5",
+        '"version": "v0.6' in manifest_json,
+        "site/manifest.json should have version v0.6",
     )
 
     # Normalize zenodo text: remove both plain commas and LaTeX {,} formatting

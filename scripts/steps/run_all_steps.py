@@ -50,7 +50,27 @@ def main():
         "step_008_injection_recovery.py",
         "step_013_claim_consistency_audit.py",
         "step_014_shell_consistency.py",
-        "step_015_derived_operator_forward.py"
+        "step_015_derived_operator_forward.py",
+        "step_016_ambient_saturation.py",
+        "step_017_radius_law_estimator_check.py",
+        "step_018_environmental_covariate_audit.py",
+        "step_019_two_branch_estimator.py",
+        "step_020_scalar_shear_ambient.py",
+        "step_020b_run_pair_at_derived.py",
+        "step_020e_pair_at_strata.py",
+        "step_020f_pair_grid.py",
+        "step_020c_refined_estimator.py",
+        "step_020d_disk_ambient.py",
+        "step_020g_ambient_map.py",
+        "step_020h_depth_channel.py",
+        "step_020i_noise_null.py",
+        "step_020j_noise_corrected_ambient.py",
+        "step_020k_selection_downturn.py",
+        "step_020l_selection_window_inversion.py",
+        "step_020l_selection_safe_environment.py",
+        "step_020m_eccentricity_mixture.py",
+        "step_020n_purity_weighted_profiles.py",
+        "step_020o_jacobi_tide_bound.py"
     ]
     
     for step in steps:

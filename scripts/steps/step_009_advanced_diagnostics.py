@@ -351,8 +351,8 @@ def self_screening_model(df):
         full_alpha = float(fs["alpha"].iloc[0])
         full_alpha_err = float(fs["alpha_err_stat"].iloc[0])
     else:
-        print_status("003_screening_fit_summary.csv not found; using fallback full-sample alpha", "WARNING")
-        full_alpha, full_alpha_err = 0.366, 0.012  # current best-fit fallback
+        print_status("003_screening_fit_summary.csv not found; skipping self-screening model (no stale fallback)", "WARNING")
+        return None
 
     # Data points: (median primary mass, α_sat, α_err)
     data_points = [
@@ -443,6 +443,81 @@ def self_screening_model(df):
         dof_pow = 1
         pow_fit_success = False
 
+    # Model 3: Bounded recovery law (theory-consistent self-screening).
+    # The physical response is alpha_sat = sqrt(1 + 2 beta_A^2 S_eff) - 1 with
+    # S_eff <= 1, so alpha can never exceed sqrt(3) - 1 = 0.732; in the
+    # Galactic ambient the plateau is further capped by the ambient vertex
+    # product. The unbounded exponential extrapolates through this ceiling
+    # (alpha0 ~ 1.7), which is an artifact of the ansatz, not a data feature.
+    # Here self-screening enters through a bounded recovery fraction
+    #   y(M) = 1 / (1 + (M/M_s)^p)   (y -> 1 at low mass, -> 0 at high mass)
+    # inside the physical map:
+    #   alpha_sat(M) = sqrt(1 + 2 * S_amb * y(M)) - 1,
+    # so the M -> 0 limit alpha0 = sqrt(1 + 2 S_amb) - 1 is structurally
+    # bounded by the ambient vertex factor S_amb <= 1.
+    def bounded_model(M, S_amb, M_s, p):
+        y = 1.0 / (1.0 + (M / M_s) ** p)
+        return np.sqrt(1.0 + 2.0 * S_amb * y) - 1.0
+
+    try:
+        popt_bnd, pcov_bnd = curve_fit(
+            bounded_model, masses, alphas, sigma=alpha_errs,
+            p0=[0.7, 0.7, 3.0], bounds=([0.01, 0.01, 0.1], [1.0, 10.0, 50.0]),
+            maxfev=20000,
+        )
+        S_amb_bnd = float(popt_bnd[0])
+        M_s_bnd = float(popt_bnd[1])
+        p_bnd = float(popt_bnd[2])
+        alpha0_bnd = float(np.sqrt(1.0 + 2.0 * S_amb_bnd) - 1.0)
+
+        pred_bnd = bounded_model(masses, *popt_bnd)
+        chi2_bnd = float(np.sum(((alphas - pred_bnd) / alpha_errs) ** 2))
+        dof_bnd = len(masses) - 3
+
+        print_status(
+            f"Bounded recovery model: S_amb = {S_amb_bnd:.3f}, "
+            f"M_s = {M_s_bnd:.3f} M_sun, p = {p_bnd:.2f}, "
+            f"alpha0(M->0) = {alpha0_bnd:.3f} (ceiling 0.732), "
+            f"chi2 = {chi2_bnd:.2f} (dof = {dof_bnd})",
+            "RESULT",
+        )
+        bnd_fit_success = True
+    except (RuntimeError, ValueError) as e:
+        print_status(f"Bounded recovery model fit failed: {e}", "WARNING")
+        S_amb_bnd = M_s_bnd = p_bnd = alpha0_bnd = chi2_bnd = np.nan
+        dof_bnd = 0
+        popt_bnd = None
+        bnd_fit_success = False
+
+    # The bounded fit is saturated (3 parameters on 3 points, dof = 0), so
+    # curve_fit's covariance is not meaningful. Propagate the measured
+    # alpha errors by Monte-Carlo refit for an honest alpha0 interval.
+    alpha0_bnd_mc_err = np.nan
+    if bnd_fit_success:
+        rng_bnd = np.random.default_rng(SEED + 7)
+        a0_draws = []
+        for _ in range(2000):
+            a_draw = rng_bnd.normal(alphas, alpha_errs)
+            try:
+                pb, _ = curve_fit(
+                    bounded_model, masses, a_draw, sigma=alpha_errs,
+                    p0=list(popt_bnd),
+                    bounds=([0.01, 0.01, 0.1], [1.0, 10.0, 50.0]),
+                    maxfev=20000)
+                a0_draws.append(np.sqrt(1.0 + 2.0 * pb[0]) - 1.0)
+            except (RuntimeError, ValueError):
+                pass
+        if len(a0_draws) > 100:
+            lo, hi = np.percentile(a0_draws, [16, 84])
+            alpha0_bnd_mc_err = float(0.5 * (hi - lo))
+            print_status(
+                f"Bounded recovery alpha0 = {alpha0_bnd:.3f} "
+                f"+/- {alpha0_bnd_mc_err:.3f} (MC over point errors, "
+                f"{len(a0_draws)} converged draws; dof=0 so this is "
+                f"propagated measurement error, not a fit uncertainty)",
+                "RESULT",
+            )
+
     # Note: As detailed in the Kilifi manuscript (Section 8.1), alpha_sat is a velocity-profile
     # amplitude and should NOT be compared directly to the microscopic pulsar coupling (0.58 dex)
     # or the macroscopic response coefficients (kappa_gal).
@@ -471,6 +546,13 @@ def self_screening_model(df):
         "pow_index_err": p_pow_err,
         "pow_chi2": chi2_pow,
         "pow_dof": dof_pow,
+        "bnd_S_amb": S_amb_bnd,
+        "bnd_M_s": M_s_bnd,
+        "bnd_p": p_bnd,
+        "bnd_alpha0": alpha0_bnd,
+        "bnd_alpha0_mc_err": alpha0_bnd_mc_err,
+        "bnd_chi2": chi2_bnd,
+        "bnd_dof": dof_bnd,
     }
 
     # Generate figure
@@ -484,6 +566,9 @@ def self_screening_model(df):
     if pow_fit_success:
         ax.plot(M_grid, power_model(M_grid, *popt_pow), "r--", linewidth=1.5,
                 label=f"Power law: $p = {p_pow:.2f}$")
+    if bnd_fit_success:
+        ax.plot(M_grid, bounded_model(M_grid, *popt_bnd), "g-.", linewidth=1.5,
+                label=f"Bounded recovery: $\\alpha_0 = {alpha0_bnd:.2f}$ (cap 0.73)")
     ax.set_xlabel("Primary mass [$M_\\odot$]")
     ax.set_ylabel("$\\alpha_{\\rm sat}$")
     ax.set_title("Mass-Dependent Self-Screening")

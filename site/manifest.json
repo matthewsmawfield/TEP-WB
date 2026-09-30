@@ -4,7 +4,8 @@
   "author": "Matthew Lukin Smawfield",
   "version": "v0.6 (Kilifi)",
   "first_published": "19 March 2026",
-  "date": "16 September 2026",
+  "date": "30 September 2026",
+  "doi": "10.5281/zenodo.19102061",
   "sections": [
     {
       "id": "abstract",
@@ -67,7 +68,7 @@
       "order": 10
     }
   ],
-  "last_updated": "16 September 2026",
+  "last_updated": "30 September 2026",
   "icons": [
     {
       "src": "public/android-chrome-192x192.png",

@@ -1094,11 +1094,14 @@ function createManuscriptContext(options = {}) {
         low_mass_delta_vs_const_tex: formatLatexInteger(
           subsetControls.low_primary_mass_half?.delta_chi2_vs_constant_boost,
         ),
-        self_alpha0: formatFixed(selfScreening.exp_alpha0, 2),
-        self_alpha0_err: formatFixed(selfScreening.exp_alpha0_err, 2),
-        self_mscreen: formatFixed(selfScreening.exp_M_screen, 2),
+        self_alpha0: formatFixed(selfScreening.bnd_alpha0 ?? selfScreening.exp_alpha0, 2),
+        self_alpha0_err: formatFixed(
+          selfScreening.bnd_alpha0_mc_err ?? selfScreening.exp_alpha0_err,
+          2,
+        ),
+        self_mscreen: formatFixed(selfScreening.bnd_M_s ?? selfScreening.exp_M_screen, 2),
         self_mscreen_err: formatFixed(selfScreening.exp_M_screen_err, 2),
-        self_chi2: formatFixed(selfScreening.exp_chi2, 2),
+        self_chi2: formatFixed(selfScreening.bnd_chi2 ?? selfScreening.exp_chi2, 2),
         self_tension_sigma: formatFixed(
           selfScreening.tension_with_cepheid_sigma,
           1,
