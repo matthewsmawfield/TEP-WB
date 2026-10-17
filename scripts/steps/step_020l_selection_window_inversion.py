@@ -82,6 +82,16 @@ def load_pair_stack():
                 np.asarray([r["d_over_rstar"] for r in rows]),
                 np.asarray([r.get("y_pair_direct", r["y_pair"])
                             for r in rows]))
+    p59 = os.path.join(TEP_RES, "step_59_two_center.json")
+    if os.path.exists(p59):
+        d59 = json.load(open(p59)).get("two_branch", {})
+        for u0_s, rr in d59.items():
+            u0 = float(u0_s)
+            if u0 > 0.23 and u0 not in st:
+                st[u0] = (
+                    np.asarray([r["d_over_rstar"] for r in rr]),
+                    np.asarray([r.get("y_pair_direct", r["y_pair"]) for r in rr]),
+                )
     return st
 
 

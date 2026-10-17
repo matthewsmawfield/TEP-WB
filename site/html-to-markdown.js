@@ -176,7 +176,7 @@ DOI: ${doi}
             const markdown = header + this.htmlToMarkdown(allHtml);
             
             // Extract version and codename for the filename
-            const versionRaw = manifest.version || 'v0.6 (Kilifi)';
+            const versionRaw = manifest.version || 'v0.7 (Kilifi)';
             // Matches "v0.2 (Kilifi)" or "0.2 (Kilifi)" or "v0.2"
             const match = versionRaw.match(/^(v?[\d.]+)(?:\s*\(([^)]+)\))?$/);
             
@@ -188,7 +188,7 @@ DOI: ${doi}
                 codenamePart = match[2] || 'Kilifi';
             }
             
-            const markdownFilename = `13-TEP-WB-${versionPart}-${codenamePart}.md`;
+            const markdownFilename = `D13-TEP-WB-${versionPart}-${codenamePart}.md`;
             const outputPath = path.join(__dirname, '..', markdownFilename);
             
             fs.writeFileSync(outputPath, markdown, 'utf8');

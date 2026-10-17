@@ -72,7 +72,6 @@ def run_claim_consistency_audit():
     manuscript_source = "\n".join(
         read_text(path) for path in sorted(COMPONENTS.glob("*.html"))
     )
-    generated = read_text(PROJECT_ROOT / "13-TEP-WB-v0.5-Kilifi.md")
 
     # Release metadata sources
     version_txt = read_text(PROJECT_ROOT / "version.txt")
@@ -83,6 +82,18 @@ def run_claim_consistency_audit():
     version_json = read_text(PROJECT_ROOT / "VERSION.json")
     manifest_json = read_text(PROJECT_ROOT / "site" / "manifest.json")
     zenodo_desc = read_text(PROJECT_ROOT / "zenodo.txt")
+
+    # Current release identity comes from VERSION.json so the audit does not
+    # need to be edited on every version bump.
+    try:
+        version_meta = json.loads(version_json)
+        current_version = str(version_meta.get("version", "")).lstrip("v")
+        codename = str(version_meta.get("codename", "")).strip()
+        paper = str(version_meta.get("paper", "")).strip()
+    except Exception:
+        current_version = codename = paper = ""
+    generated_md = PROJECT_ROOT / f"{paper}-TEP-WB-v{current_version}-{codename}.md" if current_version else None
+    generated = read_text(generated_md) if generated_md is not None else ""
 
     rows = []
 
@@ -181,12 +192,12 @@ def run_claim_consistency_audit():
             severity="warning",
         )
 
-    # Release metadata consistency checks
+    # Release metadata consistency checks (version resolved from VERSION.json)
     add_check(
         rows,
         "version_txt_current",
-        "v0.6" in version_txt and "v0.5" not in version_txt.split("\n")[0],
-        "version.txt should reflect current release (v0.6)",
+        bool(current_version) and version_txt.split("\n")[0].startswith(f"v{current_version}"),
+        f"version.txt first line should be the current release (v{current_version})",
     )
 
     add_check(
@@ -206,29 +217,29 @@ def run_claim_consistency_audit():
     add_check(
         rows,
         "root_citation_cff_version",
-        "version: v0.6" in root_cff,
-        "root CITATION.cff should have version v0.6",
+        f"version: v{current_version}" in root_cff,
+        f"root CITATION.cff should have version v{current_version}",
     )
 
     add_check(
         rows,
         "site_citation_cff_version",
-        "version: v0.6" in site_cff,
-        "site CITATION.cff should have version v0.6",
+        f"version: v{current_version}" in site_cff,
+        f"site CITATION.cff should have version v{current_version}",
     )
 
     add_check(
         rows,
         "version_json_current",
-        '"version": "0.6"' in version_json,
-        "VERSION.json should have version 0.6",
+        bool(current_version) and f'"version": "{current_version}"' in version_json,
+        f"VERSION.json should have version {current_version}",
     )
 
     add_check(
         rows,
         "manifest_json_current",
-        '"version": "v0.6' in manifest_json,
-        "site/manifest.json should have version v0.6",
+        f'"version": "v{current_version}' in manifest_json,
+        f"site/manifest.json should have version v{current_version}",
     )
 
     # Normalize zenodo text: remove both plain commas and LaTeX {,} formatting

@@ -1,9 +1,9 @@
 {
-  "version": "0.6",
+  "version": "0.7",
   "codename": "Kilifi",
   "description": "Paper 13: Temporal Equivalence Principle: Temporal Shear Recovery in Gaia DR3 Wide Binaries",
-  "date": "2026-09-16",
-  "previous_version": "0.5",
+  "date": "2026-10-17",
+  "previous_version": "0.6",
   "paper": "13",
   "doi": "10.5281/zenodo.19102061"
 }

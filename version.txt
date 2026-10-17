@@ -1,7 +1,5 @@
-v0.6 (Kilifi) — 16 September 2026 — Canonical TEP architecture alignment
+v0.7 (Kilifi) — 17 October 2026 — Master-action two-branch wide-binary joint test and ambient Galactic floor closure
 
-- Added weak-field theoretical bridge (Φ_eff, a_eff, v_c² relation) connecting recovered Temporal Shear to the wide-binary velocity enhancement.
-- Aligned terminology with the mature TEP corpus: "screened to active-shear regime," "canonical phenomenological TEP recovery profile," "environmental ordering," and "unsuppressed conformal-sector response."
-- Refined fitted-vs-predicted R_s wording and chameleon comparison to distinguish TEP-specific cross-sector identification from generic screened-scalar morphology.
-- Added covariance-aware significance statements (AR(1), GP) to abstract and renamed "bootstrap" to "parametric-resampling" throughout.
-- Scoped and qualified claims ("0 false positives in 100 null mocks," "within 3% under the stated external-field prescription," "demonstrates that tested variations cannot") and synchronized all citation files.
+- Evaluated the Gaia DR3 wide-binary relative-velocity profile under the selected two-branch kinetic sector P_,X = k sqrt(xi) + 2xi (k = 16.03, g_t = cH_0/2 = 3.40 x 10^-10 m/s^2, zero free parameters), passing the joint test at 0.44 sigma on saturation amplitude (alpha_sat = 0.371 vs derived 4 sqrt(2)/k = 0.353) and 1.69 sigma on transition radius (R_s = 2,646 +/- 182 AU) while excluding the unit-term baseline and exponential-interpolation rival at ~30 sigma
+- Derived the isolated screening radius R_s = sqrt(GM/g_t) = 4.7 kAU at the sample mean mass, confirming the factor ~1.8 compression expected from embedding in the ambient Galactic floor (xi_env ~ 0.32-0.52)
+- Synchronized cross-paper references and the shared core library across the corpus

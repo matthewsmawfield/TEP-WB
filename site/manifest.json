@@ -2,9 +2,9 @@
   "title": "Temporal Equivalence Principle: Temporal Shear Recovery in Gaia DR3 Wide Binaries",
   "short_title": "TEP-WB: Temporal Shear Recovery",
   "author": "Matthew Lukin Smawfield",
-  "version": "v0.6 (Kilifi)",
+  "version": "v0.7 (Kilifi)",
   "first_published": "19 March 2026",
-  "date": "30 September 2026",
+  "date": "17 October 2026",
   "doi": "10.5281/zenodo.19102061",
   "sections": [
     {
@@ -68,7 +68,7 @@
       "order": 10
     }
   ],
-  "last_updated": "30 September 2026",
+  "last_updated": "17 October 2026",
   "icons": [
     {
       "src": "public/android-chrome-192x192.png",

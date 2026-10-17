@@ -11,7 +11,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+/lib/
 lib64/
 parts/
 sdist/
@@ -63,3 +63,6 @@ site/.nojekyll
 
 .devin/
 manuscripts/
+
+# Editor workspace state
+*.code-workspace
